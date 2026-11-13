@@ -249,6 +249,30 @@ class ContentTest(unittest.TestCase):
                 for m in c.get("more", []):
                     self.assertTrue(m.strip(), rid)
                     self.assertNotIn(m, c["p"], f"{rid}: {c['t']} — more와 p 중복")
+                # 대표 그림(fig): 보고서 수치로 다시 그린 막대·추이 그림
+                f = c.get("fig")
+                if f:
+                    where = f"{rid}: {c['t']} — 그림"
+                    self.assertIn(f["type"], ("bar", "bar2", "line"), where)
+                    self.assertTrue(f["title"].strip(), where)
+                    if f["type"] == "line":
+                        self.assertTrue(f["series"], where)
+                        for ser in f["series"]:
+                            self.assertEqual(len(ser["values"]), len(f["x"]), where)
+                            self.assertTrue(all(isinstance(v, (int, float)) for v in ser["values"]), where)
+                    else:
+                        width = 3 if f["type"] == "bar2" else 2
+                        if f["type"] == "bar2":
+                            self.assertEqual(len(f["series"]), 2, where)
+                        self.assertGreaterEqual(len(f["items"]), 2 if f["type"] == "bar" else 1, where)
+                        for it in f["items"]:
+                            self.assertEqual(len(it), width, where)
+                            self.assertTrue(isinstance(it[0], str) and it[0].strip(), where)
+                            self.assertTrue(all(isinstance(v, (int, float)) and v >= 0 for v in it[1:]), where)
+                # 직접 넣은 그림(img): 경로와 설명(대체 텍스트)·출처가 있어야 한다
+                m = c.get("img")
+                if m:
+                    self.assertTrue(m.get("src") and (m.get("alt") or m.get("cap")) and m.get("credit"), f"{rid}: {c['t']} — img")
 
     def test_metrics_and_issues(self):
         rep = json.loads((ROOT / "assets" / "reports.json").read_text(encoding="utf-8"))
