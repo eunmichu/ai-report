@@ -1,4 +1,4 @@
-[README.md](https://github.com/user-attachments/files/34803449/README.md)
+[Uploading README.md…]()
 # AI Report Radar
 
 **국내외 대표 AI 보고서를 깊게 읽기 위한** 정적 웹사이트입니다. 네 개의 탭으로 되어 있습니다.
@@ -64,7 +64,7 @@ Commit하면 몇 분 안에 다시 배포됩니다. 형식이 틀리면 배포 �
 
 | 바꿀 것 | 파일·필드 |
 |---|---|
-| 보고서 추가·새 판 반영 | `reports.json` → `reports`. 필수: `id`, `region`(`intl`/`kr`), `title`, `short`(짧은 이름), `org`, `date`, `url`, `about`, `cycle`(`quarterly`·`annual`·`biennial`·`5y`·`adhoc`), `months`(보통 나오는 달), `when`, `next`, `method`·`limits`·`korea`(분석 노트), `watch`(새 소식을 찾을 낱말), `findings` |
+| 보고서 추가·새 판 반영 | `reports.json` → `reports`. 필수: `id`, `region`(`intl`/`kr`), `title`, `short`(짧은 이름), `org`, `date`, `url`, `about`, `cycle`(`quarterly`·`annual`·`biennial`·`5y`·`adhoc`), `months`(보통 나오는 달), `when`, `next`, `method`·`limits`·`korea`(분석 노트), `watch`(새 소식을 찾을 낱말), `findings`. 선택: `status`(`active`·`paused`·`ended`), `statusNote`(중지·폐간 사유와 시점), `refs`(참고 링크) |
 | 핵심 발견 | `findings` 의 `t`(요약), `n`(강조 수치, 선택), `topics`(주제 키) |
 | 달력의 '앞으로 3개월' | `nextYM`(`YYYY-MM`), 중간판은 `minor`·`minorLabel` |
 | 참고 링크 | `reports.json`의 보고서에 `refs: [{label, url}]`를 적으면 원문 링크 옆에 함께 나옵니다(예: AI Index의 한국어 요약). |
@@ -73,6 +73,17 @@ Commit하면 몇 분 안에 다시 배포됩니다. 형식이 틀리면 배포 �
 | 쟁점 | `issues.json` → `issues`(`rows[].r` 은 보고서 id, `chart` 는 차트 id) |
 | 새 소식 주제 분류·검색 동의어 | `taxonomy.json` |
 | 수집 주기·보존 기간 | 환경변수 `NEWS_EVERY_HOURS`(0), `NEWS_RETENTION_DAYS`(400), `GNEWS_WINDOW`(3d) |
+
+### 보고서 목록 관리(추가·중지·폐간)
+
+| 하려는 일 | 고칠 곳 |
+|---|---|
+| 새 보고서 추가 | `reports.json`의 `reports`에 항목을 넣고(필수 칸은 위 표), `chapters.json`에 같은 `id`로 챕터 정리를 넣습니다. 새 소식은 `watch`·`watchIf` 낱말로 다음 수집부터 찾습니다. |
+| 수집 잠시 중지 | 해당 보고서에 `"status": "paused"`를 적습니다. 화면에는 그대로 남고 '수집 중지' 표시가 붙으며, 새 소식만 찾지 않습니다. 다시 찾으려면 `status`를 지우거나 `"active"`로 바꿉니다. |
+| 폐간·발간 중단 | `"status": "ended"`와 `"statusNote": "2027년 발간 중단 발표"`처럼 사유·시점을 적습니다. 새 소식 수집과 발간 달력·'앞으로 3개월'에서 빠지고, 주기별 목록 맨 뒤에 '발간 중단' 표시와 함께 남습니다. 지난 판 정리와 이미 모은 소식은 지우지 않습니다. |
+| 완전히 삭제 | `reports.json`과 `chapters.json`에서 항목을 지우고, `metrics.json`·`issues.json`에서 그 `id`를 쓰는 곳을 정리합니다. 그 보고서에만 연결된 소식은 다음 수집 때 자동으로 지워집니다. |
+
+고친 뒤 `python -m collector --list-reports`를 실행하면 보고서별 상태·주기·다음 판을 표로 보여 주고, 빠진 칸·겹친 id·챕터 정리 누락·검색 낱말 누락·발간 중단 사유 누락을 점검합니다(수집은 하지 않음). 같은 점검은 테스트(`test_report_status`)에도 들어 있어, 잘못 고치면 자동 갱신 작업이 배포 전에 멈춥니다.
 
 새 판이 나오면: `reports.json` 에서 해당 보고서의 `title`·`date`·`edition`·`findings`·`next` 를, `chapters.json` 에서 챕터 정리를 고치고,
 `metrics.json` 의 판별 수치에 새 값을 더하면 지표 추적 차트도 함께 늘어납니다.
