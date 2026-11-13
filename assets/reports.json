@@ -1,5 +1,5 @@
 {
- "_doc": "국내외 AI 보고서 정리 — 직접 고르고 요약하는 목록(자동 수집 아님). findings: t(핵심 발견 요약), n(강조 수치, 선택), topics(아래 topics 키). region: intl(해외)·kr(국내). cycle/months/minor/when/next/nextYM: 발간 주기와 달력. method(조사 방법)·limits(읽을 때 주의할 점)·korea(한국에 주는 시사점)는 정리자의 분석. watch: 새 소식 수집 때 이 보고서를 언급한 기사로 보는 낱말(영문은 단어 단위, 한글은 띄어쓰기 무시). urlLabel: 링크 이름(기본 '원문 페이지'). 2026-11-13 기준.",
+ "_doc": "국내외 AI 보고서 정리 — 직접 고르고 요약하는 목록(자동 수집 아님). findings: t(핵심 발견 요약), n(강조 수치, 선택), topics(아래 topics 키). region: intl(해외)·kr(국내). cycle/months/minor/when/next/nextYM: 발간 주기와 달력. method(조사 방법)·limits(읽을 때 주의할 점)·korea(한국에 주는 시사점)는 정리자의 분석. watch: 새 소식 수집 때 이 보고서를 언급한 기사로 보는 낱말(영문은 단어 단위, 한글은 띄어쓰기 무시). watchIf: 흔한 이름(예: 'AI Index')은 with 의 낱말이 함께 있을 때만 이 보고서로 본다. urlLabel: 링크 이름(기본 '원문 페이지'). 2026-11-13 기준.",
  "updated": "2026-11-13",
  "topics": [
   {
@@ -90,10 +90,26 @@
    "limits": "여러 출처를 모은 2차 집계라 지표마다 기준 연도와 정의가 다르고, 영어·중국어 자료 중심이라 2024년판에는 한국 모델이 한 개도 들어가지 않았습니다.",
    "korea": "주목할 AI 모델 수(3위)와 인구 대비 AI 특허(1위)는 최상위권이지만, 민간 AI 투자는 2024년 기준 세계 11위에 그쳐 '모델은 강하고 자본은 약한' 구조가 드러납니다.",
    "watch": [
-    "AI Index",
-    "AI 인덱스",
-    "AI 지수 보고서",
-    "인공지능 인덱스"
+    "Stanford AI Index",
+    "AI Index Report",
+    "스탠퍼드 AI 인덱스",
+    "스탠포드 AI 인덱스",
+    "AI 인덱스 보고서"
+   ],
+   "watchIf": [
+    {
+     "terms": [
+      "AI Index",
+      "AI 인덱스",
+      "AI 지수"
+     ],
+     "with": [
+      "Stanford",
+      "HAI",
+      "스탠퍼드",
+      "스탠포드"
+     ]
+    }
    ],
    "findings": [
     {
@@ -329,8 +345,17 @@
    "korea": "AI 기본법(2026년 1월 시행)의 하위 기준을 다듬을 때 위험 분류와 근거 수준을 맞춰 볼 국제 기준 문서로 쓸 수 있습니다.",
    "watch": [
     "International AI Safety Report",
-    "국제 AI 안전 보고서",
-    "AI 안전 보고서"
+    "국제 AI 안전 보고서"
+   ],
+   "watchIf": [
+    {
+     "terms": [
+      "AI 안전 보고서"
+     ],
+     "with": [
+      "국제"
+     ]
+    }
    ],
    "findings": [
     {
@@ -429,9 +454,19 @@
    "method": "투자사 관점에서 연구·산업·정치·안전 동향을 슬라이드로 정리하고, 전년 예측을 스스로 채점합니다.",
    "limits": "벤처 투자사가 만든 보고서라 산업·투자 시각이 강하고, 사례 선정 기준이 공개 지표만큼 엄밀하지 않습니다.",
    "korea": "세계 자본·연산 집중 흐름을 읽기에 좋지만 한국 수치는 적어, 국내 실태조사와 함께 봐야 합니다.",
-   "watch": [
-    "State of AI Report",
-    "State of AI 보고서"
+   "watch": [],
+   "watchIf": [
+    {
+     "terms": [
+      "State of AI Report",
+      "State of AI 보고서"
+     ],
+     "with": [
+      "Air Street",
+      "stateof.ai",
+      "에어스트리트"
+     ]
+    }
    ],
    "findings": [
     {
@@ -526,11 +561,21 @@
    "limits": "'AI를 쓰는 조직 89%'는 기업 비율이 아니라 응답자 비율이며, AI에 관심 있는 대기업 응답자가 많을 수 있습니다.",
    "korea": "국가별 결과는 없지만, 개인 생산성과 기업 재무 성과 사이의 간극은 한국은행이 국내에서 찾은 '생산성 단절'과 같은 방향입니다.",
    "watch": [
-    "McKinsey Global Survey",
     "McKinsey State of AI",
     "맥킨지 AI 현황",
-    "맥킨지 AI 보고서",
-    "맥킨지 글로벌 설문"
+    "맥킨지 AI 보고서"
+   ],
+   "watchIf": [
+    {
+     "terms": [
+      "McKinsey Global Survey",
+      "맥킨지 글로벌 설문"
+     ],
+     "with": [
+      "AI",
+      "인공지능"
+     ]
+    }
    ],
    "findings": [
     {
@@ -611,9 +656,19 @@
    "korea": "한국은 2025년 처음 10위 안에 들어 2026년에도 10위를 지켰고, 저작권 분야는 4년 연속 7위입니다. 생성형 AI 저작권 안내서가 모범 사례로 꼽혔습니다.",
    "watch": [
     "International IP Index",
-    "IP Index",
     "국제지식재산지수",
     "국제 IP 지수"
+   ],
+   "watchIf": [
+    {
+     "terms": [
+      "IP Index"
+     ],
+     "with": [
+      "Chamber",
+      "GIPC"
+     ]
+    }
    ],
    "findings": [
     {
@@ -702,8 +757,19 @@
    "korea": "국내 기업·기관의 생성형 AI 특허 위치를 확인할 수 있어, 지식재산처의 AI 분야 심사실무가이드 개정(2026.1)과 함께 보면 좋습니다.",
    "watch": [
     "WIPO generative AI",
-    "Patent Landscape Report",
     "생성형 AI 특허 동향"
+   ],
+   "watchIf": [
+    {
+     "terms": [
+      "Patent Landscape Report"
+     ],
+     "with": [
+      "generative",
+      "GenAI",
+      "생성형"
+     ]
+    }
    ],
    "findings": [
     {
@@ -1007,9 +1073,22 @@
    "limits": "고용주의 '기대'를 묻는 전망이라 실제 고용 변화와는 다를 수 있습니다.",
    "korea": "국가 프로필로 국내 고용주가 예상하는 기술 수요를 볼 수 있고, 한국은행의 실제 청년 고용 분석과 나란히 보면 전망과 현실을 비교할 수 있습니다.",
    "watch": [
-    "Future of Jobs",
+    "Future of Jobs Report",
     "일자리의 미래 보고서",
     "미래 일자리 보고서"
+   ],
+   "watchIf": [
+    {
+     "terms": [
+      "Future of Jobs"
+     ],
+     "with": [
+      "World Economic Forum",
+      "WEF",
+      "세계경제포럼",
+      "다보스"
+     ]
+    }
    ],
    "findings": [
     {
@@ -1283,8 +1362,20 @@
    "limits": "분석가 판단에 기반한 유료 보고서로, 배치의 수치 근거가 공개되지 않습니다.",
    "korea": "에이전트가 기대의 정점을 지났다는 판단은, 도입 효과를 따지는 국내 기업이 과잉 기대를 경계할 근거가 됩니다.",
    "watch": [
-    "Hype Cycle",
-    "하이프 사이클"
+    "Gartner Hype Cycle",
+    "가트너 하이프 사이클"
+   ],
+   "watchIf": [
+    {
+     "terms": [
+      "Hype Cycle",
+      "하이프 사이클"
+     ],
+     "with": [
+      "Gartner",
+      "가트너"
+     ]
+    }
    ],
    "findings": [
     {
@@ -1345,8 +1436,19 @@
    "korea": "한국 개발사는 평가 대상에 없지만, AI 기본법의 투명성 의무를 구체화할 때 어떤 정보 공개가 부족한지 보여 주는 참고가 됩니다.",
    "watch": [
     "Foundation Model Transparency Index",
-    "파운데이션 모델 투명성 지수",
-    "FMTI"
+    "파운데이션 모델 투명성 지수"
+   ],
+   "watchIf": [
+    {
+     "terms": [
+      "FMTI"
+     ],
+     "with": [
+      "Stanford",
+      "transparency",
+      "투명성"
+     ]
+    }
    ],
    "findings": [
     {
@@ -1412,9 +1514,21 @@
    "korea": "정책 역량은 96점으로 최상위지만 인프라가 약해 8위로 내려갔습니다. 컴퓨팅·데이터 기반 투자가 순위를 좌우합니다.",
    "watch": [
     "Government AI Readiness Index",
-    "AI Readiness Index",
     "정부 AI 준비도",
     "정부 AI 준비 지수"
+   ],
+   "watchIf": [
+    {
+     "terms": [
+      "AI Readiness Index",
+      "AI 준비 지수",
+      "AI 준비도 지수"
+     ],
+     "with": [
+      "Oxford Insights",
+      "옥스퍼드"
+     ]
+    }
    ],
    "findings": [
     {
@@ -1771,9 +1885,20 @@
    "method": "직업·연령·성별로 층화해 뽑은 취업자 5,512명에게 AI 사용과 업무시간·처리량 변화를 물었습니다.",
    "limits": "업무시간 변화를 스스로 답한 자료라 측정 오차가 있고, 이슈노트는 한국은행의 공식 견해가 아닌 집필자 견해입니다.",
    "korea": "시간을 아껴도 업무 흐름과 조직이 바뀌지 않으면 생산성으로 이어지지 않는다는 결론은, 도입 지원보다 업무 재설계·인력 재배치 지원이 필요하다는 뜻입니다.",
-   "watch": [
-    "BOK 이슈노트",
-    "한국은행 이슈노트"
+   "watch": [],
+   "watchIf": [
+    {
+     "terms": [
+      "BOK 이슈노트",
+      "한국은행 이슈노트",
+      "BOK Issue Note"
+     ],
+     "with": [
+      "AI",
+      "인공지능",
+      "생성형"
+     ]
+    }
    ],
    "findings": [
     {
