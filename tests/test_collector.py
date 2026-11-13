@@ -216,6 +216,19 @@ class ContentTest(unittest.TestCase):
                 self.assertTrue(f["t"].strip(), r["id"])
                 self.assertTrue(f["topics"] and set(f["topics"]) <= topics, f"{r['id']}: {f['t'][:20]}")
 
+    def test_chapters(self):
+        rep = json.loads((ROOT / "assets" / "reports.json").read_text(encoding="utf-8"))
+        rids = [r["id"] for r in rep["reports"]]
+        chs = json.loads((ROOT / "assets" / "chapters.json").read_text(encoding="utf-8"))["reports"]
+        self.assertEqual(set(chs), set(rids))                   # 모든 보고서에 챕터 정리가 있다
+        for rid, doc in chs.items():
+            self.assertTrue(doc.get("basis"), rid)
+            self.assertGreaterEqual(len(doc["chapters"]), 2, rid)
+            for c in doc["chapters"]:
+                self.assertTrue(c["t"].strip() and c["s"].strip(), rid)
+                self.assertTrue(c["p"] and all(p.strip() for p in c["p"]), f"{rid}: {c['t']}")
+                self.assertLessEqual(len(c["s"]), 90, f"{rid}: {c['t']} — 한 장 요약 문장은 짧게")
+
     def test_metrics_and_issues(self):
         rep = json.loads((ROOT / "assets" / "reports.json").read_text(encoding="utf-8"))
         rids = {r["id"] for r in rep["reports"]}
