@@ -1,0 +1,82 @@
+name: AI Report Radar 소식 수집·배포
+
+# 3시간마다 실행한다. cron 은 UTC 기준이며, 정시(0분)는 GitHub 예약이 몰려 늦거나
+# 빠지는 일이 잦아 17분으로 비켜 둔다. 보고서 이름이 들어간 기사만 모은다(assets/reports.json 의 watch).
+# 보고서·지표·쟁점 내용(assets/*.json)을 고쳐 main 에 올리면 바로 다시 배포된다.
+on:
+  schedule:
+    - cron: "17 */3 * * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "주기와 상관없이 지금 수집"
+        type: boolean
+        default: true
+  push:
+    branches: [main]
+    paths:
+      - "index.html"
+      - "assets/**"
+      - "collector/**"
+      - ".github/workflows/update.yml"
+
+permissions:
+  contents: write   # gh-pages 브랜치에 사이트를 올리기 위해 필요
+
+concurrency:
+  group: ai-report-pages
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: 코드 받기
+        uses: actions/checkout@v5
+
+      - name: 파이썬 준비
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+        # 외부 패키지 없음 — 표준 라이브러리만 사용
+
+      - name: 이전 데이터 복원 (gh-pages → data/)
+        run: |
+          mkdir -p data
+          if git ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1; then
+            git fetch --depth=1 origin gh-pages
+            git archive FETCH_HEAD data | tar -x -C . && echo "이전 데이터 복원 완료" || echo "gh-pages 에 data/ 없음"
+          else
+            echo "gh-pages 브랜치 없음 → 첫 실행"
+          fi
+          ls -la data
+
+      - name: 테스트 (네트워크 없이)
+        run: |
+          python -m unittest discover -s tests -v
+          node --test tests/search.test.mjs
+
+      - name: 보고서 소식 수집
+        run: python -m collector ${{ inputs.force && '--force' || '' }}
+
+      - name: 사이트 조립
+        run: |
+          rm -rf _site && mkdir _site
+          cp -r index.html assets data _site/
+          touch _site/.nojekyll
+          du -sh _site/data/*
+
+      - name: gh-pages 로 배포
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd _site
+          git init -q
+          git checkout -q -b gh-pages
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "데이터 갱신 $(date -u +'%Y-%m-%d %H:%M UTC')"
+          # 매번 커밋 하나로 덮어쓴다 → 저장소가 커지지 않고 데이터는 data/ 에 누적된다
+          git push -f "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
