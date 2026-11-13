@@ -35,6 +35,7 @@ def main() -> None:
     reps = json.loads((ROOT / "assets/reports.json").read_text(encoding="utf-8"))
     mets = json.loads((ROOT / "assets/metrics.json").read_text(encoding="utf-8"))
     iss = json.loads((ROOT / "assets/issues.json").read_text(encoding="utf-8"))
+    chs = json.loads((ROOT / "assets/chapters.json").read_text(encoding="utf-8"))
 
     html = (ROOT / "index.html").read_text(encoding="utf-8")
     css = (ROOT / "assets/style.css").read_text(encoding="utf-8")
@@ -42,7 +43,7 @@ def main() -> None:
     app = (ROOT / "assets/app.js").read_text(encoding="utf-8")
     search = re.sub(r"^export \{[^}]*\};?\s*$", "", search, flags=re.M).replace("export function", "function").replace("export const", "const")
     app = re.sub(r"^import .*?;\s*$", "", app, flags=re.M)
-    data = json.dumps({"items": items, "meta": meta, "taxonomy": tax, "reports": reps, "metrics": mets, "issues": iss}, ensure_ascii=False, separators=(",", ":"))
+    data = json.dumps({"items": items, "meta": meta, "taxonomy": tax, "reports": reps, "metrics": mets, "issues": iss, "chapters": chs}, ensure_ascii=False, separators=(",", ":"))
     data = data.replace("</", "<\\/")
     icon = "data:image/svg+xml;base64," + base64.b64encode((ROOT / "assets/favicon.svg").read_bytes()).decode()
 
