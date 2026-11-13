@@ -169,10 +169,15 @@ class ReportMatchTest(unittest.TestCase):
 
     def test_match(self):
         m = self.rm.match
-        self.assertEqual(m("AI Index 2026 shows…"), ["ai-index-2026"])
+        self.assertEqual(m("Stanford AI Index 2026 shows…"), ["ai-index-2026"])
+        self.assertEqual(m("IMD's 2026 AI Index ranks Saudi Arabia"), [])            # 흔한 이름은 기관명이 있어야 연결
+        self.assertEqual(m("Salesforce Global AI Readiness Index"), [])
+        self.assertEqual(m("한국은행 이슈노트 \"가계부채\""), [])
+        self.assertEqual(m("한국은행 이슈노트 \"생성형 AI 생산성\""), ["bok-ai-2026"])
         self.assertEqual(m("2026 인터넷 이용 실태조사"), ["kr-internet-2025"])   # 띄어쓰기 무시
         self.assertEqual(m("Global  Innovation Index ranks"), ["gii-2026"])      # 여러 칸 공백
-        self.assertEqual(m("Explaining the hype cycles"), ["gartner-hc-ai-2026"])
+        self.assertEqual(m("Gartner explains its hype cycles"), ["gartner-hc-ai-2026"])
+        self.assertEqual(m("Hype cycle anxiety"), [])
         self.assertEqual(m("KAI index fund"), [])                               # 단어 안의 'ai index' 는 무시
         self.assertEqual(m("반도체 수출 사상 최대"), [])
 
@@ -210,7 +215,9 @@ class ContentTest(unittest.TestCase):
             self.assertTrue(r["months"] and all(1 <= m <= 12 for m in r["months"] + r.get("minor", [])), r["id"])
             if r.get("nextYM"):
                 self.assertRegex(r["nextYM"], r"^\d{4}(-\d{2})?$", r["id"])
-            self.assertTrue(r.get("watch"), f"{r['id']}.watch")
+            self.assertTrue(r.get("watch") or r.get("watchIf"), f"{r['id']}.watch")
+            for g in r.get("watchIf") or []:
+                self.assertTrue(g.get("terms") and g.get("with"), f"{r['id']}.watchIf")
             self.assertTrue(r["findings"], r["id"])
             for f in r["findings"]:
                 self.assertTrue(f["t"].strip(), r["id"])
@@ -224,10 +231,24 @@ class ContentTest(unittest.TestCase):
         for rid, doc in chs.items():
             self.assertTrue(doc.get("basis"), rid)
             self.assertGreaterEqual(len(doc["chapters"]), 2, rid)
+            self.assertTrue(doc.get("lead", "").strip(), f"{rid}: 한 장 요약 첫 문단(lead)")
+            self.assertEqual(len(doc.get("keys", [])), 4, f"{rid}: 핵심 수치(keys)는 4개")
+            for k in doc["keys"]:
+                self.assertTrue(k["v"].strip() and k["l"].strip(), rid)
+                self.assertLessEqual(len(k["v"]), 10, f"{rid}: 핵심 수치는 짧게 — {k['v']}")
             for c in doc["chapters"]:
                 self.assertTrue(c["t"].strip() and c["s"].strip(), rid)
                 self.assertTrue(c["p"] and all(p.strip() for p in c["p"]), f"{rid}: {c['t']}")
                 self.assertLessEqual(len(c["s"]), 90, f"{rid}: {c['t']} — 한 장 요약 문장은 짧게")
+                # 한 장 요약 줄(b): 챕터마다 2~5줄, 한 줄 45자 이내
+                self.assertTrue(2 <= len(c.get("b", [])) <= 5, f"{rid}: {c['t']} — b 줄 수")
+                for line in c["b"]:
+                    self.assertTrue(line.strip(), rid)
+                    self.assertLessEqual(len(line), 45, f"{rid}: {c['t']} — {line}")
+                # 더보기 상세(more): 있으면 빈 줄 없이, 상세 정리(p)와 같은 문장을 되풀이하지 않는다
+                for m in c.get("more", []):
+                    self.assertTrue(m.strip(), rid)
+                    self.assertNotIn(m, c["p"], f"{rid}: {c['t']} — more와 p 중복")
 
     def test_metrics_and_issues(self):
         rep = json.loads((ROOT / "assets" / "reports.json").read_text(encoding="utf-8"))
