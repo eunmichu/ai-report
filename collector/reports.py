@@ -17,9 +17,48 @@ _YEAR = re.compile(r"(?<!\d)(20[2-4]\d)(?!\d)")
 _WS = re.compile(r"\s+")
 
 
+# 보고서 상태(reports.json 의 status, 없으면 active)
+#   active: 새 소식을 찾는다 · paused: 잠시 찾지 않는다 · ended: 폐간·발간 중단(기록과 화면은 남긴다)
+STATUSES = ("active", "paused", "ended")
+
+
 def load_reports(path: Path | None = None) -> list[dict]:
     with open(path or config.REPORTS_PATH, encoding="utf-8") as f:
         return json.load(f).get("reports", [])
+
+
+def status(r: dict) -> str:
+    return r.get("status") or "active"
+
+
+def active_reports(reports: list[dict]) -> list[dict]:
+    """새 소식을 찾을 보고서만(수집 중지·발간 중단은 뺀다)."""
+    return [r for r in reports if status(r) == "active"]
+
+
+REQUIRED = ("id", "region", "title", "short", "org", "date", "url", "about", "cycle", "when", "next")
+
+
+def check_reports(reports: list[dict], chapters: dict | None = None) -> list[str]:
+    """보고서 목록 점검 — 문제 문장 목록(비었으면 정상)."""
+    out, seen = [], set()
+    for i, r in enumerate(reports):
+        rid = r.get("id") or f"#{i + 1}"
+        if rid in seen:
+            out.append(f"{rid}: id가 겹칩니다")
+        seen.add(rid)
+        miss = [k for k in REQUIRED if not r.get(k)]
+        if miss:
+            out.append(f"{rid}: 빠진 칸 {', '.join(miss)}")
+        if status(r) not in STATUSES:
+            out.append(f"{rid}: status는 {'/'.join(STATUSES)} 가운데 하나여야 합니다")
+        if status(r) == "active" and not (r.get("watch") or r.get("watchIf")):
+            out.append(f"{rid}: 새 소식을 찾을 낱말(watch 또는 watchIf)이 없습니다")
+        if status(r) == "ended" and not r.get("statusNote"):
+            out.append(f"{rid}: 발간 중단 사유·시점(statusNote)을 적어 주세요")
+        if chapters is not None and rid not in chapters:
+            out.append(f"{rid}: chapters.json에 챕터 정리가 없습니다")
+    return out
 
 
 def edition_year(r: dict) -> int:
