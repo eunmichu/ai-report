@@ -206,6 +206,12 @@
      ],
      "t": "한국은 G20 중 AI 관련 법안 통과 수 2위(17건)이며, 보고서는 AI기본법을 산업 육성과 신뢰 기반을 함께 마련한 선도 사례로 소개했습니다."
     }
+   ],
+   "refs": [
+    {
+     "label": "한국어 요약(파이토치 한국 커뮤니티)",
+     "url": "https://discuss.pytorch.kr/t/stanford-hai-2026-ai-index-report-ai-ai-9-pdf-423p/9940"
+    }
    ]
   },
   {
@@ -1137,6 +1143,97 @@
    ]
   },
   {
+   "id": "pwc-jobs-2026",
+   "region": "intl",
+   "title": "2026 Global AI Jobs Barometer: Two futures for jobs in an AI era",
+   "ko": "PwC 글로벌 AI 일자리 바로미터 2026",
+   "short": "PwC AI 일자리 바로미터",
+   "org": "PwC",
+   "date": "2026-06-15",
+   "edition": "2026년판",
+   "url": "https://pwc.com/gx/en/news-room/press-releases/2026/pwc-2026-ai-jobs-barometer.html",
+   "urlLabel": "공식 발표",
+   "pdf": "https://www.pwc.dk/da/publikationer/2026/2026-global-ai-jobs-barometer-full-report.pdf",
+   "kind": "채용공고 분석",
+   "scope": "27개 국가·지역 채용공고 10억 건 이상 + 기업 재무보고서",
+   "about": "PwC가 세계 채용공고와 기업 재무 자료를 분석해 AI가 일자리·임금·생산성·필요 역량에 주는 영향을 추적하는 연례 보고서입니다. 2026년판은 AI가 노동시장을 '전문화'와 '대중화' 두 갈래로 나누고 있다고 봤습니다.",
+   "cycle": "annual",
+   "months": [
+    6
+   ],
+   "when": "매년 6월(2024년 시작)",
+   "next": "2027년 6월경",
+   "nextYM": "2027-06",
+   "since": 2024,
+   "method": "27개 국가·지역의 채용공고 10억 건 이상, 수천 개 기업의 재무보고서, 직무별 업무 데이터를 결합해 분석합니다.",
+   "limits": "채용공고는 실제 고용이 아니라 수요 신호이고, 상관관계 분석이라 AI가 원인이라고 단정할 수 없습니다. 모든 나라의 결과가 따로 나오지는 않습니다.",
+   "korea": "임금 프리미엄과 '전문화·대중화' 구분은 한국은행의 청년 고용 분석, 맥킨지의 인력 전망과 나란히 보면 AI가 일자리를 없애는지 바꾸는지 가늠하는 데 도움이 됩니다.",
+   "watch": [
+    "AI Jobs Barometer",
+    "AI 일자리 바로미터",
+    "AI 잡스 바로미터"
+   ],
+   "watchIf": [
+    {
+     "terms": [
+      "Jobs Barometer",
+      "일자리 바로미터"
+     ],
+     "with": [
+      "PwC",
+      "삼일PwC"
+     ]
+    }
+   ],
+   "findings": [
+    {
+     "n": "62%",
+     "topics": [
+      "work"
+     ],
+     "t": "AI 역량을 요구하는 일자리의 임금 프리미엄은 평균 62%로 1년 전(57%)보다 높아졌고, 소비재 업종은 118%에 이릅니다."
+    },
+    {
+     "n": "2배",
+     "topics": [
+      "work"
+     ],
+     "t": "사람의 판단·전문성이 더 중요해지는 '전문화' 직무는 비전문가도 할 수 있게 되는 '대중화' 직무보다 일자리 증가가 두 배 빠르고 임금 증가도 42% 빠릅니다."
+    },
+    {
+     "n": "34% vs 24%",
+     "topics": [
+      "adoption",
+      "work"
+     ],
+     "t": "2018년 대비 2025년 노동생산성 증가는 AI 노출이 가장 큰 업종 34%, 가장 작은 업종 24%였습니다."
+    },
+    {
+     "n": "52% vs 36%",
+     "topics": [
+      "work",
+      "adoption"
+     ],
+     "t": "AI를 가장 잘 활용하는 기업의 2018년 대비 인원 증가는 52%로, 가장 덜 활용하는 기업(36%)보다 컸습니다."
+    },
+    {
+     "n": "+69%",
+     "topics": [
+      "work",
+      "tech"
+     ],
+     "t": "AI 특화 역량을 요구하는 일자리는 69% 늘어 전체 일자리(9%)보다 약 8배 빠르게 늘었습니다."
+    },
+    {
+     "n": "+35%",
+     "topics": [
+      "work"
+     ],
+     "t": "미국에서 AI 노출이 큰 신입 직무 가운데 상위 역량을 요구하는 일자리는 2019년 이후 35% 늘었고, 다른 신입 일자리는 10% 줄었습니다."
+    }
+   ]
+  },
+  {
    "id": "unctad-tir-2025",
    "region": "intl",
    "title": "Technology and Innovation Report 2025: Inclusive AI for Development",
@@ -1331,6 +1428,90 @@
       "adoption"
      ],
      "t": "아랍에미리트(73.3%)와 싱가포르(64.3%)가 1·2위를 지켰고, 미국은 두 분기 연속 21위에 머물렀습니다."
+    }
+   ]
+  },
+  {
+   "id": "msft-wti-2026",
+   "region": "intl",
+   "title": "2026 Work Trend Index Annual Report: Agents, human agency, and the opportunity for every organization",
+   "ko": "마이크로소프트 업무동향지표 2026",
+   "short": "MS 업무동향지표",
+   "org": "Microsoft",
+   "date": "2026-05-05",
+   "edition": "2026년 연례판",
+   "url": "https://microsoft.com/en-us/worklab/work-trend-index/agents-human-agency-and-the-opportunity-for-every-organization",
+   "urlLabel": "공식 보고서",
+   "kind": "근로자 설문 + 사용 데이터",
+   "scope": "10개국 AI 사용 지식근로자 2만 명 + Microsoft 365 익명 신호",
+   "about": "마이크로소프트가 AI를 쓰는 지식근로자 설문과 Microsoft 365 사용 신호로 일하는 방식의 변화를 보는 연례 보고서입니다. 2026년판은 개인은 AI로 할 수 있는 일이 넓어졌지만 조직이 따라가지 못하는 '전환의 역설'을 짚었습니다.",
+   "cycle": "annual",
+   "months": [
+    5
+   ],
+   "when": "매년 봄(2026년 5월 5일)",
+   "next": "2027년 봄",
+   "nextYM": "2027-05",
+   "since": 2021,
+   "method": "외부 조사기관이 2026년 2월 18일~4월 7일 10개국에서 AI를 업무에 쓰는 지식근로자 2만 명을 조사하고, 수조 건의 익명 Microsoft 365 생산성 신호를 함께 분석했습니다.",
+   "limits": "응답자가 모두 AI 사용자이고 효과를 스스로 답한 자료라 효과가 크게 나올 수 있습니다. 자사 제품 데이터를 쓴 분석이기도 합니다.",
+   "korea": "한국 응답자의 54%가 AI로 1년 전보다 더 나은 결과물을 낸다고 답했지만, 경영진의 AI 전략이 명확하다는 응답은 16%에 그쳐 조직 준비가 과제로 나타났습니다.",
+   "watch": [
+    "Work Trend Index",
+    "업무동향지표",
+    "업무 트렌드 지표"
+   ],
+   "watchIf": [
+    {
+     "terms": [
+      "워크 트렌드 인덱스",
+      "업무 동향 지표"
+     ],
+     "with": [
+      "마이크로소프트",
+      "Microsoft",
+      "한국MS"
+     ]
+    }
+   ],
+   "findings": [
+    {
+     "n": "58%",
+     "topics": [
+      "adoption",
+      "work"
+     ],
+     "t": "AI 사용자의 58%가 1년 전에는 할 수 없던 결과물을 만든다고 답했고, 고급 사용자(Frontier Professional)는 80%였습니다."
+    },
+    {
+     "n": "15배",
+     "topics": [
+      "tech",
+      "adoption"
+     ],
+     "t": "Microsoft 365에서 활동하는 AI 에이전트가 1년 새 15배(대기업 18배) 늘었습니다."
+    },
+    {
+     "n": "49%",
+     "topics": [
+      "work"
+     ],
+     "t": "AI와의 대화 가운데 49%가 분석·문제 해결·전략적 사고 같은 인지 업무를 돕습니다."
+    },
+    {
+     "n": "19%",
+     "topics": [
+      "adoption"
+     ],
+     "t": "AI 사용자 가운데 AI 활용에서 앞서 있는 'Frontier Firm'에서 일하는 비율은 19%입니다."
+    },
+    {
+     "n": "16%",
+     "topics": [
+      "korea",
+      "adoption"
+     ],
+     "t": "한국 응답자의 54%가 AI로 더 나은 결과물을 낸다고 답했지만, 경영진의 AI 전략이 명확하다는 응답은 16%였습니다."
     }
    ]
   },
