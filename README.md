@@ -1,0 +1,93 @@
+# AI Report Radar
+
+**국내외 대표 AI 보고서를 깊게 읽기 위한** 정적 웹사이트입니다. 네 개의 탭으로 되어 있습니다.
+
+| 탭 | 내용 |
+|---|---|
+| **보고서** | 해외 17종·국내 6종, 핵심 발견 139건. 보고서마다 소개·범위·원문 링크와 함께 **조사 방법 · 읽을 때 주의할 점 · 한국에 주는 시사점**을 붙였습니다. **보고서별 / 주제별 / 발간 주기**(한 해 발간 달력, 앞으로 3개월 안에 나올 보고서)로 바꿔 보고, **전체 / 해외 / 국내**로 거를 수 있습니다. |
+| **지표 추적** | 판별 수치를 모은 차트 10개 — 한국 순위(글로벌 혁신 지수·MS AI 확산·정부 AI 준비도·국제 IP 지수·AI Index), 한국 생성형 AI 이용률을 조사별로 비교, 세계 지표(MS·맥킨지·OECD·투명성 지수). 차트마다 표 보기와 툴팁이 있습니다. |
+| **쟁점 분석** | 같은 질문에 대한 여러 보고서의 답을 나란히 놓고 **숫자가 다른 이유 → 종합 판단 → 한국 시사점**으로 정리합니다. (한국인 몇 %가 생성형 AI를 쓰나? · AI는 생산성으로 이어지나? · AI가 일자리를 줄이나? · 한국의 AI 경쟁력은 몇 위인가? · AI는 안전하고 투명한가?) |
+| **새 소식** | 보고서 이름이 들어간 기사만 3시간마다 모읍니다. 기사마다 어떤 보고서의 소식인지 표시하고, 최신판보다 뒤의 연도가 나오면 **새 판 가능성**으로 표시합니다. |
+
+다룬 보고서
+
+- 해외 — Stanford AI Index · AI100 · 국제 AI 안전 보고서 · State of AI · 맥킨지 AI 현황 · 국제 IP 지수 · WIPO 생성형 AI 특허 ·
+  글로벌 혁신 지수 · IEA 에너지와 AI · OECD 디지털 경제·사회 전망 · WEF 일자리의 미래 · UNCTAD 기술혁신 보고서 ·
+  EUIPO 생성형 AI와 저작권 · MS 글로벌 AI 확산 · 가트너 AI 하이프 사이클 · 파운데이션 모델 투명성 지수 · 정부 AI 준비도 지수
+- 국내 — 인터넷이용실태조사 · 지능정보사회 이용자 패널조사 · 부가통신사업 실태조사 · 디지털산업 실태조사 ·
+  인공지능산업 실태조사 · 한국은행 BOK 이슈노트(AI의 생산성·고용 효과)
+
+```
+https://<계정>.github.io/<저장소>/                               보고서(첫 화면)
+https://<계정>.github.io/<저장소>/#view=cycle                     발간 주기·발간 달력
+https://<계정>.github.io/<저장소>/#region=kr                      국내 보고서만
+https://<계정>.github.io/<저장소>/#tab=issue&cat=work             일자리 관련 쟁점
+https://<계정>.github.io/<저장소>/#tab=news&newer=1               새 판 가능성이 있는 소식
+```
+
+## 폴더 구성
+
+```
+index.html               화면(한 장)
+assets/
+  reports.json           ★ 보고서·핵심 발견·발간 주기·분석 노트 — 직접 고치는 파일
+  metrics.json           ★ 지표 추적 차트(판별 수치) — 직접 고치는 파일
+  issues.json            ★ 쟁점 분석(질문·보고서별 답·이유·판단·시사점) — 직접 고치는 파일
+  taxonomy.json          새 소식 주제 분류 키워드와 검색 동의어
+  app.js · search.js · style.css   화면 로직·한국어 검색·디자인
+collector/               새 소식 수집기(파이썬 표준 라이브러리만 사용)
+  config.py              주기·보존 기간·RSS·검색어 묶음 크기
+  reports.py             기사 → 보고서 연결, 새 판 감지, 검색어 생성
+  sources_news.py        Google 뉴스 RSS, 매체 RSS
+tools/build_snapshot.py  데이터까지 담은 단일 HTML 파일 만들기
+tests/                   오프라인 테스트(파이썬 19개, 검색 9개)
+.github/workflows/update.yml   3시간마다 수집 → gh-pages 배포
+```
+
+## GitHub Pages에 올리기 (처음 한 번)
+
+1. **파일 올리기** — 저장소(예: `ai-report`)에 이 폴더의 내용을 그대로 올립니다. `.github` 폴더까지 포함되어야 합니다.
+2. **첫 실행** — Actions 탭 → `AI Report Radar 소식 수집·배포` → **Run workflow**. 몇 분 뒤 `gh-pages` 브랜치가 생깁니다.
+3. **Pages 켜기** — Settings → Pages → Source: **Deploy from a branch** → Branch: **gh-pages** / **(root)** → Save.
+4. 1~2분 뒤 `https://<계정>.github.io/<저장소>/` 에서 열립니다. 이후 새 소식은 3시간마다 자동으로 갱신됩니다.
+
+API 키는 필요 없습니다. 워크플로가 `Permission denied`로 실패하면 Settings → Actions → General →
+Workflow permissions를 **Read and write permissions**로 바꾸세요.
+
+## 내용 고치기
+
+보고서·지표·쟁점은 자동 수집이 아니라 **직접 고치는 JSON 파일**입니다. GitHub에서 파일을 열고 연필 아이콘으로 고친 뒤
+Commit하면 몇 분 안에 다시 배포됩니다. 형식이 틀리면 배포 전 테스트에서 걸리므로, Actions에 빨간 X가 뜨면 고친 줄을 확인하세요.
+
+| 바꿀 것 | 파일·필드 |
+|---|---|
+| 보고서 추가·새 판 반영 | `reports.json` → `reports`. 필수: `id`, `region`(`intl`/`kr`), `title`, `short`(짧은 이름), `org`, `date`, `url`, `about`, `cycle`(`quarterly`·`annual`·`biennial`·`5y`·`adhoc`), `months`(보통 나오는 달), `when`, `next`, `method`·`limits`·`korea`(분석 노트), `watch`(새 소식을 찾을 낱말), `findings` |
+| 핵심 발견 | `findings` 의 `t`(요약), `n`(강조 수치, 선택), `topics`(주제 키) |
+| 달력의 '앞으로 3개월' | `nextYM`(`YYYY-MM`), 중간판은 `minor`·`minorLabel` |
+| 지표 차트 | `metrics.json` → `charts`(`type`: `line`·`time`·`bar`, 순위는 `invert: true`) 와 `groups` |
+| 쟁점 | `issues.json` → `issues`(`rows[].r` 은 보고서 id, `chart` 는 차트 id) |
+| 새 소식 주제 분류·검색 동의어 | `taxonomy.json` |
+| 수집 주기·보존 기간 | 환경변수 `NEWS_EVERY_HOURS`(0), `NEWS_RETENTION_DAYS`(400), `GNEWS_WINDOW`(3d) |
+
+새 판이 나오면: `reports.json` 에서 해당 보고서의 `title`·`date`·`edition`·`findings`·`next` 를 고치고,
+`metrics.json` 의 판별 수치에 새 값을 더하면 지표 추적 차트도 함께 늘어납니다.
+
+## 내 컴퓨터에서 실행
+
+파이썬 3.10 이상만 있으면 됩니다(설치할 패키지 없음).
+
+```bash
+python -m collector --force      # 실제 소식 수집 (또는 --demo 로 샘플 데이터)
+python -m http.server 8000       # → http://localhost:8000
+```
+
+테스트: `python -m unittest discover -s tests -v` · `node --test tests/search.test.mjs`
+단일 파일: `python tools/build_snapshot.py -o report-radar.html` → 서버 없이 열리는 HTML 한 장.
+
+## 참고
+
+- 보고서 요약·지표는 **2026-11-13 기준** 원문·공식 발표와 신뢰할 만한 보도를 대조해 정리했습니다.
+  일부 국내 보고서는 공식 페이지 대신 발표 자료·보도로 연결되며, 링크 이름(발표 자료·관련 보도)으로 구분했습니다.
+- 조사 방법·주의할 점·시사점, 쟁점의 '종합 판단'은 정리자의 분석입니다. 정확한 수치와 맥락은 원문에서 확인하세요.
+- '다음 판'과 '새 판 가능성'은 예상·자동 감지이므로 실제 발표로 확인해야 합니다.
+- 새 소식은 제목·요약·링크만 보여 줍니다. 원문과 저작권은 각 출처에 있습니다.
