@@ -767,3 +767,6 @@ body.a4-open { overflow: hidden; }
 .a4-tbl th, .a4-tbl td { border-bottom: 1px solid var(--rule); padding: .25em .4em; text-align: left; }
 .a4-tbl td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .result-bar .chip.primary { border-color: var(--t-guide); color: var(--t-guide); background: color-mix(in srgb, var(--t-guide) 10%, var(--surface)); font-weight: 600; }
+.stb { border-radius: 5px; padding: 0 6px; font-size: 11.5px; font-weight: 700; border: 1px solid currentColor; }
+.stb.st-paused { color: var(--t-patent); }
+.stb.st-ended { color: var(--ink-3); }
