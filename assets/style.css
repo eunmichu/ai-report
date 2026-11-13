@@ -75,7 +75,7 @@ mark { background: var(--mark); color: inherit; border-radius: 3px; padding: 0 1
 
 /* ── 배치 ─────────────────────────────────────────── */
 .shell { max-width: 1160px; margin: 0 auto; padding: 20px 24px 40px; display: grid;
-  grid-template-columns: 268px minmax(0, 1fr); grid-template-areas: "side controls" "side feed";
+  grid-template-columns: 268px minmax(0, 1fr); grid-template-areas: "hot hot" "side controls" "side feed";
   column-gap: 36px; align-items: start; }
 .controls { grid-area: controls; max-width: 760px; }
 .side { grid-area: side; position: sticky; top: 72px; max-height: calc(100vh - 88px); overflow: auto;
@@ -367,7 +367,7 @@ details.panel:not([open]) > summary { margin-bottom: 0; }
 
 /* ── 좁은 화면 ─────────────────────────────────────── */
 @media (max-width: 960px) {
-  .shell { grid-template-columns: minmax(0, 1fr); grid-template-areas: "controls" "side" "feed"; padding: 14px 16px 32px; }
+  .shell { grid-template-columns: minmax(0, 1fr); grid-template-areas: "hot" "controls" "side" "feed"; padding: 14px 16px 32px; }
   .controls, .feed { max-width: none; }
   .side { position: static; max-height: none; overflow: visible; padding: 0; margin-top: 14px; }
   .panel { margin-bottom: 10px; }
@@ -604,7 +604,32 @@ svg.chart.wide { max-height: 340px; }
 @media (max-width: 720px) { .op-keys { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
 /* 챕터 상세 더보기 */
-.chapters > .stage-h .all-more { margin-left: auto; font-size: 13px; padding: 4px 12px; font-weight: 500; }
+.chapters > .stage-h { flex-wrap: wrap; }
+.ch-tools { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; }
+.ch-tools .chip { font-size: 13px; padding: 4px 12px; font-weight: 500; }
+.bar-end { display: inline-flex; gap: 6px; flex-wrap: wrap; }
+
+/* 챕터 대표 그림(보고서 수치로 다시 그림) */
+.fig { margin: 0 0 12px; padding: 12px 14px 10px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line-2); }
+.fig figcaption { font-weight: 700; font-size: 14px; line-height: 1.45; color: var(--ink); }
+.fig svg.chart { max-width: 460px; }
+.fg-rows { display: grid; gap: 6px; margin-top: 8px; }
+.fg-row { display: grid; grid-template-columns: minmax(6em, 32%) minmax(0, 1fr); gap: 10px; align-items: center; }
+.fg-l { font-size: 13px; color: var(--ink-2); line-height: 1.35; }
+.fg-row.hl .fg-l { color: var(--ink); font-weight: 700; }
+.fg-v { display: grid; gap: 3px; }
+.fg-bar { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.fg-bar i { flex: none; height: 14px; width: max(3px, calc((100% - 6.5em) * var(--w))); border-radius: 0 4px 4px 0; background: var(--t-rfind); }
+.fg-rows.two .fg-bar i { height: 11px; background: var(--s1); }
+.fg-rows.two .fg-bar.b2 i { background: var(--s2); }
+.fg-row.hl .fg-bar i { background: var(--s2); }
+.fg-bar b { color: var(--ink); font-size: 12.5px; font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.fg-key { margin: 6px 0 0; display: flex; gap: 14px; font-size: 12.5px; color: var(--ink-2); }
+.fg-key i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; background: var(--s1); }
+.fg-key i.b2 { background: var(--s2); }
+.fg-src { margin: 8px 0 0; font-size: 11.5px; color: var(--ink-3); line-height: 1.45; }
+.fig.img img { display: block; max-width: 100%; height: auto; margin-top: 8px; border-radius: 6px; }
+@media (max-width: 520px) { .fg-row { grid-template-columns: minmax(0, 1fr); gap: 2px; } }
 .ch-more { margin: 12px 0 0; padding: 12px 14px 10px; border-radius: 10px; border: 1px dashed var(--line); }
 .ch-more-h { margin: 0 0 4px; font-size: 12.5px; font-weight: 700; color: var(--ink-2); }
 .ch-x { font-size: 14px; }
@@ -625,12 +650,14 @@ body.a4-open { overflow: hidden; }
 .a4-act { margin-left: auto; display: flex; gap: 8px; }
 .a4-btn { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 8px; padding: 6px 14px; font-weight: 600; font-size: 14px; cursor: pointer; }
 .a4-btn.primary { background: var(--t-rfind); border-color: var(--t-rfind); color: #fff; }
-.a4-stage { flex: 1; overflow: auto; padding: 16px; display: flex; justify-content: center; align-items: flex-start; }
+.a4-stage { flex: 1; overflow: auto; padding: 16px; }
+.a4-pages { display: flex; flex-direction: column; align-items: center; gap: 18px; }
 .a4-frame { flex: none; position: relative; }
 .a4-sheet { --fs: 10pt; --ink: #14213D; --ink-2: #3E4A62; --ink-3: #6B7488; --acc: #5443B8; --acc-bg: #F1EFFB; --rule: #D9DDE6;
   position: absolute; left: 0; top: 0; transform-origin: 0 0; width: 210mm; height: 297mm; padding: 12mm 13mm 11mm; box-sizing: border-box; overflow: hidden;
   background: #fff; color: var(--ink); box-shadow: 0 12px 40px rgba(0, 0, 0, .35); font: 400 var(--fs)/1.5 var(--font); font-feature-settings: "tnum" 1;
-  -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  --surface: #fff; --line: #DDE2EA; --line-2: #E6E9EF; --t-rfind: #5443B8; --s1: #2a78d6; --s2: #eb6834; }
 .a4-in { height: 100%; display: flex; flex-direction: column; gap: .75em; overflow: hidden; }
 .a4-head { border-bottom: 2px solid var(--ink); padding-bottom: .55em; }
 .a4-meta { margin: 0; display: flex; flex-wrap: wrap; gap: .2em .9em; font-size: .86em; color: var(--ink-2); }
@@ -662,6 +689,34 @@ body.a4-open { overflow: hidden; }
 .a4-notes { display: grid; grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr)); gap: .9em; border-top: 2px solid var(--ink); padding-top: .5em; }
 .a4-notes h2 { margin: 0 0 .15em; font-size: .95em; font-weight: 700; }
 .a4-notes p { margin: 0; font-size: .9em; line-height: 1.55; color: var(--ink-2); }
+/* 보고서 전체: 챕터 이어 쓰기 */
+.a4-flow { gap: .5em; }
+.a4-body { flex: 1; min-height: 0; overflow: hidden; }
+.a4-body > * + * { margin-top: .22em; }
+.a4-body > .a4-blk:has(> .a4-h), .a4-body > .a4-blk:has(> .a4-fig), .a4-body > .a4-blk:has(> .a4-k2) { margin-top: .7em; }
+.a4-cs:not(:first-child) { margin-top: 1.3em; padding-top: .9em; border-top: 1.5px solid var(--ink); }
+.a4-pno { margin: 0; text-align: right; font-size: .78em; color: var(--ink-3); }
+.a4-run { margin: 0; display: flex; justify-content: space-between; gap: 1em; font-size: .8em; color: var(--ink-3); border-bottom: 1px solid var(--rule); padding-bottom: .35em; }
+.a4-chead { display: flex; align-items: flex-start; gap: .7em; }
+.a4-chead > div { flex: 1; min-width: 0; }
+.a4-cno { flex: none; width: 1.9em; height: 1.9em; border-radius: .4em; display: grid; place-items: center; background: var(--acc); color: #fff; font-weight: 700; font-size: 1.15em; }
+.a4-chead h1 { margin: 0; font-size: 1.6em; line-height: 1.25; font-weight: 700; letter-spacing: -0.02em; }
+.a4-en { margin: .1em 0 0; font-size: .9em; color: var(--ink-3); }
+.a4-chead em { flex: none; font-style: normal; font-weight: 700; font-size: 1.4em; color: var(--acc); white-space: nowrap; }
+.a4-flow .a4-lead { margin: .45em 0 0; font-weight: 600; font-size: 1.08em; line-height: 1.6; }
+.a4-cs > .a4-fig, .a4-cs > .a4-h { margin-top: .7em; }
+.a4-fig .fig { margin: 0; border-color: var(--rule); font-size: 1em; }
+.a4-fig .fig figcaption { font-size: 1em; }
+.a4-fig .fg-l, .a4-fig .fg-bar b, .a4-fig .fg-key { font-size: .9em; }
+.a4-fig .fg-src { font-size: .78em; }
+.a4-fig .fg-bar i { height: .95em; }
+.a4-fig .fg-rows { gap: .35em; margin-top: .5em; }
+.a4-fig svg.chart { max-width: 95mm; margin-inline: auto; }
+.a4-h { margin: 0 0 .2em; font-size: .95em; font-weight: 700; color: var(--acc); }
+.a4-p { margin: 0; padding-left: 1.1em; line-height: 1.6; }
+.a4-pm { color: var(--ink-2); }
+.a4-k2 { margin: 0; padding: .5em .7em; border-radius: .45em; background: #FBEDEB; line-height: 1.55; }
+.a4-k2 b { color: #B4443A; margin-right: .5em; }
 .a4-src { margin: 0; font-size: .76em; color: var(--ink-3); line-height: 1.45; overflow-wrap: anywhere; }
 
 @media print {
@@ -670,8 +725,45 @@ body.a4-open { overflow: hidden; }
   body.print-a4 > *:not(.a4-modal) { display: none !important; }
   body.print-a4 .a4-modal { display: block !important; position: static; background: none; visibility: visible !important; }
   body.print-a4 .a4-bar { display: none !important; }
-  body.print-a4 .a4-stage { display: block; padding: 0; overflow: visible; }
+  body.print-a4 .a4-stage, body.print-a4 .a4-pages { display: block; padding: 0; overflow: visible; }
   body.print-a4 .a4-frame { width: auto !important; height: auto !important; }
-  body.print-a4 .a4-sheet { position: static; transform: none !important; box-shadow: none; height: 296.5mm; break-after: avoid; page-break-after: avoid; }
+  body.print-a4 .a4-sheet { position: static; transform: none !important; box-shadow: none; height: 296.5mm; break-after: page; page-break-after: always; }
+  body.print-a4 .a4-frame:last-child .a4-sheet { break-after: auto; page-break-after: auto; }
 }
 .ccols:not(.one) .cline .nx { display: block; margin-left: 0; }
+
+/* 최근 주요 소식(맨 위) */
+.hot { grid-area: hot; margin-bottom: 18px; }
+.hot[hidden] { display: none; }
+.hot-h { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.hot-h h2 { margin: 0; font-size: 16px; font-weight: 700; }
+.hot-h .sub { color: var(--ink-3); font-size: 12.5px; }
+.hot-h .chip { margin-left: auto; font-size: 13px; padding: 4px 12px; }
+.hot-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+.hot-i { background: var(--surface); border-radius: 12px; box-shadow: var(--shadow); padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; border-top: 3px solid var(--t-news); }
+.hot-m { margin: 0; display: flex; flex-wrap: wrap; gap: 2px 8px; font-size: 12px; color: var(--ink-3); }
+.hot-m .newer { font-size: 11.5px; }
+.hot-t { color: var(--ink); text-decoration: none; font-weight: 600; font-size: 14px; line-height: 1.45;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.hot-t:hover { text-decoration: underline; }
+.hot-r { margin: auto 0 0; display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; }
+.hot-also { font-size: 12px; color: var(--ink-3); }
+@media (max-width: 960px) { .hot-list { grid-auto-flow: column; grid-auto-columns: minmax(230px, 78%); grid-template-columns: none; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 4px; } .hot-i { scroll-snap-align: start; } }
+
+/* 지표 카드 인쇄 버튼과 지표 A4 */
+.mcard figcaption .mprint { margin-left: auto; font-size: 12.5px; padding: 3px 10px; flex: none; }
+.a4-metric { gap: .7em; }
+.a4-mhead h1 { margin: 0; font-size: 1.8em; line-height: 1.25; font-weight: 700; letter-spacing: -0.02em; }
+.a4-mhead .a4-meta { margin-top: .3em; }
+.a4-metric .a4-lead { margin: 0; }
+.a4-chartbox { flex: 1; min-height: 0; display: flex; flex-direction: column; border: 1px solid var(--rule); border-radius: .5em; padding: .6em .8em; }
+.a4-hint { margin: 0; font-size: .85em; color: var(--ink-3); }
+.a4-chart { flex: 1; min-height: 0; position: relative; }
+.a4-chart svg.chart { position: absolute; inset: 0; width: 100%; height: 100%; max-height: none; margin: 0; }
+.a4-chartbox .fg-key { margin: 0 0 .3em; font-size: .9em; flex-wrap: wrap; }
+.a4-chartbox .fg-key small { color: var(--ink-3); }
+.a4-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.2em; }
+.a4-tbl table { width: 100%; border-collapse: collapse; font-size: .82em; }
+.a4-tbl th, .a4-tbl td { border-bottom: 1px solid var(--rule); padding: .25em .4em; text-align: left; }
+.a4-tbl td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.result-bar .chip.primary { border-color: var(--t-guide); color: var(--t-guide); background: color-mix(in srgb, var(--t-guide) 10%, var(--surface)); font-weight: 600; }
