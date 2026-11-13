@@ -1,6 +1,7 @@
 """보고서 연결 — 기사 제목·요약에서 reports.json 의 watch 낱말을 찾아 어떤 보고서의 소식인지 정한다.
 
-- 영문 낱말은 대소문자 무시·단어 단위로, 한글 낱말은 띄어쓰기를 무시하고 찾는다.
+- 영문 낱말은 대소문자 무시·단어 단위(복수형 허용)로, 한글 낱말은 띄어쓰기를 무시하고 찾는다.
+- 'AI Index'·'Hype Cycle' 처럼 흔한 이름은 watchIf 로 두어, 기관명(with) 같은 낱말이 함께 있을 때만 연결한다.
 - 기사에 보고서의 최신판보다 뒤의 연도(예: 'AI Index 2027')가 함께 나오면 '새 판 가능성'으로 표시한다.
 """
 from __future__ import annotations
@@ -30,22 +31,43 @@ def edition_year(r: dict) -> int:
     return int(m.group(1)) if m else 0
 
 
+class _Words:
+    """낱말 묶음 — 영문은 정규식, 한글은 공백을 지운 부분 문자열."""
+
+    def __init__(self, words: list[str]):
+        words = [w for w in words if w and w.strip()]
+        en = sorted({w.lower() for w in words if _ASCII.match(w)}, key=len, reverse=True)
+        self.ko = sorted({_WS.sub("", w.lower()) for w in words if not _ASCII.match(w)}, key=len, reverse=True)
+        alt = "|".join(re.escape(w).replace(r"\ ", r"\s+") for w in en)
+        self.rx = re.compile(rf"(?<![a-z0-9])(?:{alt})(?:s|es)?(?![a-z0-9])") if en else None
+
+    def __bool__(self) -> bool:
+        return bool(self.rx or self.ko)
+
+    def found(self, t: str, c: str) -> bool:
+        return bool((self.rx and self.rx.search(t)) or any(k in c for k in self.ko))
+
+
 class ReportMatcher:
     def __init__(self, reports: list[dict]):
         self.rules = []
         for r in reports:
-            words = [w for w in r.get("watch") or [] if w.strip()]
-            if not words:
+            alone = _Words(r.get("watch") or [])
+            pairs = [(_Words(g.get("terms") or []), _Words(g.get("with") or [])) for g in r.get("watchIf") or []]
+            pairs = [(a, b) for a, b in pairs if a and b]
+            if not alone and not pairs:
                 continue
-            en = sorted({w.lower() for w in words if _ASCII.match(w)}, key=len, reverse=True)
-            ko = sorted({_WS.sub("", w.lower()) for w in words if not _ASCII.match(w)}, key=len, reverse=True)
-            rx = re.compile(r"(?<![a-z0-9])(?:" + "|".join(re.escape(w).replace(r"\ ", r"\s+") for w in en) + r")(?:s|es)?(?![a-z0-9])") if en else None
-            self.rules.append({"id": r["id"], "rx": rx, "ko": ko, "year": edition_year(r), "kr": r.get("region") == "kr"})
+            self.rules.append({"id": r["id"], "alone": alone, "pairs": pairs,
+                               "year": edition_year(r), "kr": r.get("region") == "kr"})
 
     def match(self, *texts: str) -> list[str]:
         t = " ".join(x for x in texts if x).lower()
         c = _WS.sub("", t)
-        return [r["id"] for r in self.rules if (r["rx"] and r["rx"].search(t)) or any(k in c for k in r["ko"])]
+        out = []
+        for r in self.rules:
+            if (r["alone"] and r["alone"].found(t, c)) or any(a.found(t, c) and b.found(t, c) for a, b in r["pairs"]):
+                out.append(r["id"])
+        return out
 
     def domestic(self, ids: list[str]) -> bool:
         return any(r["kr"] for r in self.rules if r["id"] in ids)
@@ -61,14 +83,28 @@ class ReportMatcher:
 
 
 def build_queries(reports: list[dict], per: int) -> list[dict]:
-    """Google 뉴스 검색어 — watch 낱말을 언어별로 per 개씩 OR 로 묶는다."""
-    en, ko = [], []
+    """Google 뉴스 검색어 — watch 낱말은 언어별로 per 개씩 OR 로 묶고,
+    watchIf 묶음은 '흔한 이름 + 기관명' 검색어를 따로 만든다."""
+    en, ko, pairs = [], [], []
     for r in reports:
         for w in r.get("watch") or []:
             (en if _ASCII.match(w) else ko).append(w)
+        for g in r.get("watchIf") or []:
+            terms, with_ = g.get("terms") or [], g.get("with") or []
+            if terms and with_:
+                for lang, ok in (("en", True), ("ko", False)):
+                    ts = [t for t in terms if bool(_ASCII.match(t)) == ok]
+                    ws = [w for w in with_ if bool(_ASCII.match(w)) == ok] or with_
+                    if ts:
+                        pairs.append({"q": f'"{ts[0]}" {ws[0]}', "lang": lang})
     en, ko = list(dict.fromkeys(en)), list(dict.fromkeys(ko))
     out = []
     for lang, words in (("en", en), ("ko", ko)):
         for i in range(0, len(words), per):
             out.append({"q": " OR ".join(f'"{w}"' for w in words[i:i + per]), "lang": lang})
+    seen = set()
+    for p in pairs:
+        if (p["q"], p["lang"]) not in seen:
+            seen.add((p["q"], p["lang"]))
+            out.append(p)
     return out
