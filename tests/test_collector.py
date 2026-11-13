@@ -223,6 +223,18 @@ class ContentTest(unittest.TestCase):
                 self.assertTrue(f["t"].strip(), r["id"])
                 self.assertTrue(f["topics"] and set(f["topics"]) <= topics, f"{r['id']}: {f['t'][:20]}")
 
+    def test_report_status(self):
+        from collector.reports import STATUSES, active_reports, check_reports, load_reports
+        reps = load_reports()
+        chs = json.loads((ROOT / "assets" / "chapters.json").read_text(encoding="utf-8"))["reports"]
+        self.assertEqual(check_reports(reps, chs), [])                    # 목록 점검 통과
+        for r in reps:
+            self.assertIn(r.get("status", "active"), STATUSES, r["id"])
+        # 발간 중단·수집 중지 보고서는 검색어와 새 기사 연결에서 빠진다
+        sample = [dict(reps[0], id="a"), dict(reps[0], id="b", status="paused"), dict(reps[0], id="c", status="ended", statusNote="2026년 발간 중단")]
+        self.assertEqual([r["id"] for r in active_reports(sample)], ["a"])
+        self.assertEqual(check_reports([dict(reps[0], status="ended")]), [f"{reps[0]['id']}: 발간 중단 사유·시점(statusNote)을 적어 주세요"])
+
     def test_chapters(self):
         rep = json.loads((ROOT / "assets" / "reports.json").read_text(encoding="utf-8"))
         rids = [r["id"] for r in rep["reports"]]
