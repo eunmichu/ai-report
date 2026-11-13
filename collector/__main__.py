@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import sys
 from datetime import timedelta
@@ -14,7 +15,7 @@ from pathlib import Path
 
 from . import config, demo, sources_news, store, util
 from .classify import Classifier, load_taxonomy
-from .reports import ReportMatcher, build_queries, load_reports
+from .reports import STATUSES, ReportMatcher, active_reports, build_queries, check_reports, load_reports, status
 
 TYPES = config.TYPES
 
@@ -35,6 +36,25 @@ def _retag(items: list[dict], ctx: sources_news.Ctx, now) -> list[dict]:
     return [it for it in items if sources_news.tag(it, ctx, now)]
 
 
+STATUS_KO = {"active": "수집 중", "paused": "수집 중지", "ended": "발간 중단"}
+
+
+def _list_reports(reports: list[dict]) -> int:
+    """python -m collector --list-reports — 보고서 목록·상태 표와 점검 결과."""
+    chs = json.loads((config.ROOT / "assets" / "chapters.json").read_text(encoding="utf-8")).get("reports", {})
+    print(f"보고서 {len(reports)}종 — " + " · ".join(f"{STATUS_KO[k]} {sum(1 for r in reports if status(r) == k)}" for k in STATUSES))
+    print(f"{'상태':<6} {'지역':<4} {'주기':<10} {'다음 판':<14} id")
+    for r in reports:
+        print(f"{STATUS_KO.get(status(r), status(r)):<6} {'국내' if r.get('region') == 'kr' else '해외':<4} "
+              f"{r.get('cycle', ''):<10} {str(r.get('nextYM') or r.get('next') or '')[:14]:<14} {r.get('id')}"
+              + (f"  — {r['statusNote']}" if r.get("statusNote") else ""))
+    problems = check_reports(reports, chs)
+    for p in problems:
+        print("  ! " + p)
+    print("점검: " + ("문제 없음" if not problems else f"{len(problems)}건 확인 필요"))
+    return 1 if problems else 0
+
+
 def _due(meta: dict, now, force: bool) -> list[str]:
     if force:
         return list(TYPES)
@@ -52,6 +72,7 @@ def _summary_md(meta: dict, stats: dict, due: list[str]) -> str:
              f"- 수집: {', '.join(due) or '없음(주기 미도래)'}",
              f"- 신규 {stats['new']} · 갱신 {stats['updated']} · 중복 병합 {stats['merged']}",
              f"- 누적 소식 {meta['counts']['news']}건 · 새 판 가능성 {meta.get('newer', 0)}건",
+             "- 보고서: " + " · ".join(f"{STATUS_KO[k]} {n}종" for k, n in meta.get('reports', {}).items()),
              "", "| 소스 | 상태 | 건수 | 메모 |", "|---|---|---:|---|"]
     for s in meta["sources"]:
         lines.append(f"| {s['name']} | {'✅' if s['ok'] else '⚠️'} | {s.get('count', 0)} | "
@@ -64,12 +85,19 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--data-dir", type=Path, default=config.DATA_DIR)
     ap.add_argument("--force", action="store_true", help="주기와 무관하게 수집")
     ap.add_argument("--demo", action="store_true", help="샘플 데이터로 생성(네트워크 불필요)")
+    ap.add_argument("--list-reports", action="store_true", help="보고서 목록과 상태를 보여 주고 점검만 한다(수집 안 함)")
     args = ap.parse_args(argv)
 
     now = util.now_utc()
     reports = load_reports()
-    rm = ReportMatcher(reports)
-    ctx = sources_news.Ctx(Classifier(load_taxonomy()), rm, build_queries(reports, config.GNEWS_TERMS_PER_QUERY))
+    if args.list_reports:
+        return _list_reports(reports)
+    live = active_reports(reports)
+    clf = Classifier(load_taxonomy())
+    # 새 기사는 '수집 중'인 보고서로만 찾고 연결한다
+    ctx = sources_news.Ctx(clf, ReportMatcher(live), build_queries(live, config.GNEWS_TERMS_PER_QUERY))
+    # 이미 모은 기사는 모든 보고서로 다시 분류한다(발간 중단 보고서의 지난 소식도 남긴다)
+    keep = sources_news.Ctx(clf, ReportMatcher(reports), ctx.queries)
     items, meta = store.load(args.data_dir)
     if meta.get("demo") and not args.demo:
         print("이전 데이터가 샘플이라 비우고 실제 수집을 시작합니다.")
@@ -86,7 +114,8 @@ def main(argv: list[str] | None = None) -> int:
                                "count": len(incoming), "error": None, "at": util.iso(now)}
     else:
         due = _due(meta, now, args.force)
-        print(f"수집: {', '.join(due) or '없음(주기 미도래 — 데이터만 다시 씀)'} · 검색어 {len(ctx.queries)}개")
+        print(f"수집: {', '.join(due) or '없음(주기 미도래 — 데이터만 다시 씀)'} · 검색어 {len(ctx.queries)}개"
+              f" · 보고서 {len(live)}/{len(reports)}종 수집 중")
         for typ, name, fn in _registry():
             if typ not in due:
                 if name in prev_status:
@@ -107,7 +136,7 @@ def main(argv: list[str] | None = None) -> int:
     items, stats = store.merge(items, incoming, now)
     items = store.trim(items, now)
     before = len(items)
-    items = _retag(items, ctx, now)
+    items = _retag(items, keep, now)
     if before != len(items):
         print(f"보고서와 연결되지 않는 기존 항목 {before - len(items)}건 정리")
 
@@ -123,6 +152,7 @@ def main(argv: list[str] | None = None) -> int:
         "recent_days": config.RECENT_DAYS,
         "retention_days": config.RETENTION_DAYS,
         "sources": list(statuses.values()),
+        "reports": {k: sum(1 for r in reports if status(r) == k) for k in STATUSES},
     }
     store.save(args.data_dir, items, meta, now)
     print(f"신규 {stats['new']} · 갱신 {stats['updated']} · 중복 병합 {stats['merged']} · "
