@@ -437,7 +437,7 @@ function reportHeadHTML(r, cnt) {
   if (CHAPTERS[r.id]) links.push(`<button type="button" class="goto" data-goto="${escHTML(r.id)}">챕터별 요약</button>`);
   const notes = [['조사 방법', r.method], ['읽을 때 주의할 점', r.limits], ['한국에 주는 시사점', r.korea]].filter(([, v]) => v);
   return `<header class="rhead">
-    <div class="row-meta">${regionChip(r)}<span class="kind">${escHTML(r.kind || '보고서')}</span>${cycChip(r)}<span class="src">${highlight(r.org, parsed)}</span>
+    <div class="row-meta">${regionChip(r)}${stBadge(r)}<span class="kind">${escHTML(r.kind || '보고서')}</span>${cycChip(r)}<span class="src">${highlight(r.org, parsed)}</span>
       <time>${escHTML(fmtRDate(r.date))}</time>${r.edition ? `<span>${escHTML(r.edition)}</span>` : ''}</div>
     <h3><button type="button" class="tlink" data-goto="${escHTML(r.id)}" lang="${/[가-힣]/.test(r.title) ? 'ko' : 'en'}">${highlight(r.title, parsed)}</button></h3>
     ${r.ko ? `<p class="rko">${highlight(r.ko, parsed)}</p>` : ''}
@@ -448,6 +448,9 @@ function reportHeadHTML(r, cnt) {
   </header>`;
 }
 
+// 보고서 상태: paused(새 소식 수집 중지) · ended(폐간·발간 중단 — 화면과 지난 기록은 남긴다)
+const ST = { paused: ['수집 중지', '새 소식 수집을 잠시 멈춘 보고서입니다'], ended: ['발간 중단', '더 이상 나오지 않는 보고서입니다. 지난 판 정리와 소식은 남겨 둡니다'] };
+const stBadge = (r) => (ST[r.status] ? `<span class="stb st-${escHTML(r.status)}" title="${escHTML(r.statusNote || ST[r.status][1])}">${ST[r.status][0]}</span>` : '');
 function upcoming(reps, n = 3) {
   const t = today();
   const y = +t.slice(0, 4), m = +t.slice(5, 7);
@@ -463,6 +466,7 @@ function topTopics(r, k = 4) {
 }
 
 function calendarHTML(reps) {
+  reps = reps.filter((r) => r.status !== 'ended');
   const cur = +today().slice(5, 7);
   const chip = (r, minor) => `<button type="button" class="rc cy-${escHTML(r.cycle)}${minor ? ' minor' : ''}" data-goto="${escHTML(r.id)}"
       title="${escHTML(`${r.ko || r.title} — ${r.when || ''}`)}">${escHTML(r.short || r.title)}${minor ? `<small>${escHTML(r.minorLabel || '중간판')}</small>` : ''}</button>`;
@@ -493,10 +497,10 @@ function cycleRowHTML(r, cnt) {
   return `<article class="crow" id="c-${escHTML(r.id)}">
     <div class="cwhen"><b>${(r.months || []).join('·')}월</b></div>
     <div class="cbody">
-      <div class="row-meta"><span class="kind">${escHTML(r.kind || '보고서')}</span><span class="src">${highlight(r.org, parsed)}</span></div>
+      <div class="row-meta">${stBadge(r)}<span class="kind">${escHTML(r.kind || '보고서')}</span><span class="src">${highlight(r.org, parsed)}</span></div>
       <h3><button type="button" class="tlink" data-goto="${escHTML(r.id)}">${highlight(r.ko || r.title, parsed)}</button></h3>
       <p class="cline">${latest}</p>
-      <p class="cline">${escHTML(r.when || '')}<span class="nx">다음 판 ${escHTML(r.next || '미정')}</span></p>
+      <p class="cline">${escHTML(r.when || '')}<span class="nx">${r.status === 'ended' ? escHTML(r.statusNote || '발간 중단') : `다음 판 ${escHTML(r.next || '미정')}`}</span></p>
       <div class="row-foot">${topTopics(r, 3).map(tagBtn).join('')}<button type="button" class="goto" data-goto="${escHTML(r.id)}">${CHAPTERS[r.id] ? `챕터 ${CHAPTERS[r.id].chapters.length}개 요약` : `핵심 ${cnt < total ? `${cnt}/${total}` : total}건`} 보기</button></div>
     </div></article>`;
 }
@@ -507,7 +511,7 @@ const isDetail = () => S.tab === 'report' && !!S.open && !!REP[S.open];
 function cycleOrder() {
   const out = [];
   for (const c of RCYCLES) {
-    const rows = REPORTS.filter((r) => r.cycle === c.key).sort((a, b) => (a.region === 'kr') - (b.region === 'kr') || (a.months[0] || 13) - (b.months[0] || 13) || a._ord - b._ord);
+    const rows = REPORTS.filter((r) => r.cycle === c.key).sort((a, b) => (a.status === 'ended') - (b.status === 'ended') || (a.region === 'kr') - (b.region === 'kr') || (a.months[0] || 13) - (b.months[0] || 13) || a._ord - b._ord);
     out.push(...rows);
   }
   return out;
@@ -559,7 +563,7 @@ function renderDetail(id) {
   const nc = newsCount(id);
   $('#list').innerHTML = `<article class="detail${r.region === 'kr' ? ' is-kr' : ''}">
     <header class="dhead sheet">
-      <div class="row-meta">${regionChip(r)}<span class="kind">${escHTML(r.kind || '보고서')}</span>${cycChip(r)}<span class="src">${escHTML(r.org)}</span>
+      <div class="row-meta">${regionChip(r)}${stBadge(r)}<span class="kind">${escHTML(r.kind || '보고서')}</span>${cycChip(r)}<span class="src">${escHTML(r.org)}</span>
         <time>${escHTML(fmtRDate(r.date))}</time>${r.edition ? `<span>${escHTML(r.edition)}</span>` : ''}</div>
       <h2 lang="${/[가-힣]/.test(r.title) ? 'ko' : 'en'}">${escHTML(r.title)}</h2>
       ${r.ko ? `<p class="rko">${escHTML(r.ko)}</p>` : ''}
