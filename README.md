@@ -1,10 +1,11 @@
+[README.md](https://github.com/user-attachments/files/34801888/README.md)
 # AI Report Radar
 
 **국내외 대표 AI 보고서를 깊게 읽기 위한** 정적 웹사이트입니다. 네 개의 탭으로 되어 있습니다.
 
 | 탭 | 내용 |
 |---|---|
-| **보고서** | 해외 17종·국내 6종, 핵심 발견 139건. 보고서마다 소개·범위·원문 링크와 함께 **조사 방법 · 읽을 때 주의할 점 · 한국에 주는 시사점**을 붙였습니다. **보고서별 / 주제별 / 발간 주기**(한 해 발간 달력, 앞으로 3개월 안에 나올 보고서)로 바꿔 보고, **전체 / 해외 / 국내**로 거를 수 있습니다. |
+| **보고서** (첫 화면) | 해외 17종·국내 6종. 첫 화면은 **발간 주기** — 한 해 발간 달력(달마다 해외·국내 칸을 나눠 표시)과 '앞으로 3개월 안에 나올 보고서', 주기별(분기·매년·2년·5년·특별판) 목록을 **해외와 국내를 나란히** 보여 줍니다. **보고서를 누르면 상세 화면**으로 넘어가 ① 조사 방법·읽을 때 주의할 점·한국에 주는 시사점, ② **한 장 요약**(첫 문단·핵심 수치 4개·챕터별 요약 줄), ③ **챕터별 상세 정리**(핵심 내용·주요 수치·한국 관련, **더보기**를 누르면 상세가 더 펼쳐짐), ④ 핵심 발견을 봅니다. **A4 한 장 인쇄** 버튼을 누르면 미리보기가 열리고, 글자 크기와 담을 상세 줄 수를 자동으로 맞춰 A4 한 장을 꽉 채운 요약을 인쇄하거나 PDF로 저장할 수 있습니다(상세 화면에서 Ctrl+P를 눌러도 같은 한 장이 인쇄됨). 보고서별·주제별 보기로도 바꿀 수 있습니다. |
 | **지표 추적** | 판별 수치를 모은 차트 10개 — 한국 순위(글로벌 혁신 지수·MS AI 확산·정부 AI 준비도·국제 IP 지수·AI Index), 한국 생성형 AI 이용률을 조사별로 비교, 세계 지표(MS·맥킨지·OECD·투명성 지수). 차트마다 표 보기와 툴팁이 있습니다. |
 | **쟁점 분석** | 같은 질문에 대한 여러 보고서의 답을 나란히 놓고 **숫자가 다른 이유 → 종합 판단 → 한국 시사점**으로 정리합니다. (한국인 몇 %가 생성형 AI를 쓰나? · AI는 생산성으로 이어지나? · AI가 일자리를 줄이나? · 한국의 AI 경쟁력은 몇 위인가? · AI는 안전하고 투명한가?) |
 | **새 소식** | 보고서 이름이 들어간 기사만 3시간마다 모읍니다. 기사마다 어떤 보고서의 소식인지 표시하고, 최신판보다 뒤의 연도가 나오면 **새 판 가능성**으로 표시합니다. |
@@ -18,9 +19,9 @@
   인공지능산업 실태조사 · 한국은행 BOK 이슈노트(AI의 생산성·고용 효과)
 
 ```
-https://<계정>.github.io/<저장소>/                               보고서(첫 화면)
-https://<계정>.github.io/<저장소>/#view=cycle                     발간 주기·발간 달력
-https://<계정>.github.io/<저장소>/#region=kr                      국내 보고서만
+https://<계정>.github.io/<저장소>/                               발간 주기(첫 화면, 해외·국내 함께)
+https://<계정>.github.io/<저장소>/#r=ai-index-2026                AI Index 상세(챕터별 요약)
+https://<계정>.github.io/<저장소>/#view=report&region=kr          국내 보고서를 보고서별로
 https://<계정>.github.io/<저장소>/#tab=issue&cat=work             일자리 관련 쟁점
 https://<계정>.github.io/<저장소>/#tab=news&newer=1               새 판 가능성이 있는 소식
 ```
@@ -31,6 +32,7 @@ https://<계정>.github.io/<저장소>/#tab=news&newer=1               새 판 �
 index.html               화면(한 장)
 assets/
   reports.json           ★ 보고서·핵심 발견·발간 주기·분석 노트 — 직접 고치는 파일
+  chapters.json          ★ 보고서별 챕터 정리(한 장 요약·상세) — 직접 고치는 파일
   metrics.json           ★ 지표 추적 차트(판별 수치) — 직접 고치는 파일
   issues.json            ★ 쟁점 분석(질문·보고서별 답·이유·판단·시사점) — 직접 고치는 파일
   taxonomy.json          새 소식 주제 분류 키워드와 검색 동의어
@@ -40,7 +42,7 @@ collector/               새 소식 수집기(파이썬 표준 라이브러리�
   reports.py             기사 → 보고서 연결, 새 판 감지, 검색어 생성
   sources_news.py        Google 뉴스 RSS, 매체 RSS
 tools/build_snapshot.py  데이터까지 담은 단일 HTML 파일 만들기
-tests/                   오프라인 테스트(파이썬 19개, 검색 9개)
+tests/                   오프라인 테스트(파이썬 20개, 검색 9개)
 .github/workflows/update.yml   3시간마다 수집 → gh-pages 배포
 ```
 
@@ -64,12 +66,13 @@ Commit하면 몇 분 안에 다시 배포됩니다. 형식이 틀리면 배포 �
 | 보고서 추가·새 판 반영 | `reports.json` → `reports`. 필수: `id`, `region`(`intl`/`kr`), `title`, `short`(짧은 이름), `org`, `date`, `url`, `about`, `cycle`(`quarterly`·`annual`·`biennial`·`5y`·`adhoc`), `months`(보통 나오는 달), `when`, `next`, `method`·`limits`·`korea`(분석 노트), `watch`(새 소식을 찾을 낱말), `findings` |
 | 핵심 발견 | `findings` 의 `t`(요약), `n`(강조 수치, 선택), `topics`(주제 키) |
 | 달력의 '앞으로 3개월' | `nextYM`(`YYYY-MM`), 중간판은 `minor`·`minorLabel` |
+| 챕터 정리 | `chapters.json` → `reports.<보고서 id>`: `basis`(챕터를 나눈 기준), `structure`(원문 구성 설명, 선택), `lead`(한 장 요약 첫 문단), `keys`(핵심 수치 4개 `[{v, l}]`), `chapters[]` — `t`(챕터 제목), `en`(원문 제목), `n`(핵심 수치), `s`(한 줄 요약, 90자 이내), `b`(한 장 요약 줄 2~5개, 한 줄 45자 이내), `p`(상세 정리), `more`(더보기를 누르면 펼쳐지는 상세, 선택), `k`(한국 관련, 선택) |
 | 지표 차트 | `metrics.json` → `charts`(`type`: `line`·`time`·`bar`, 순위는 `invert: true`) 와 `groups` |
 | 쟁점 | `issues.json` → `issues`(`rows[].r` 은 보고서 id, `chart` 는 차트 id) |
 | 새 소식 주제 분류·검색 동의어 | `taxonomy.json` |
 | 수집 주기·보존 기간 | 환경변수 `NEWS_EVERY_HOURS`(0), `NEWS_RETENTION_DAYS`(400), `GNEWS_WINDOW`(3d) |
 
-새 판이 나오면: `reports.json` 에서 해당 보고서의 `title`·`date`·`edition`·`findings`·`next` 를 고치고,
+새 판이 나오면: `reports.json` 에서 해당 보고서의 `title`·`date`·`edition`·`findings`·`next` 를, `chapters.json` 에서 챕터 정리를 고치고,
 `metrics.json` 의 판별 수치에 새 값을 더하면 지표 추적 차트도 함께 늘어납니다.
 
 ## 내 컴퓨터에서 실행
