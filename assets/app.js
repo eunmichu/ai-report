@@ -3,7 +3,7 @@ import { buildLexicon, parseQuery, prepareHaystack, matchScore, highlight, escHT
 
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
-const TABS = [['report', '보고서'], ['metric', '지표 추적'], ['issue', '쟁점 분석'], ['news', '새 소식']];
+const TABS = [['news', '새 소식'], ['report', '보고서'], ['metric', '지표 추적'], ['issue', '쟁점 분석']];
 const VIEWS = [['cycle', '발간 주기'], ['report', '보고서별'], ['topic', '주제별']];
 const DEFAULT_VIEW = 'cycle';
 const REGIONS = [['all', '전체'], ['intl', '해외'], ['kr', '국내']];
@@ -382,7 +382,7 @@ function renderResultBar(r) {
   if (isDetail()) {
     const v = VIEWS.find(([k]) => k === S.view);
     $('#result-bar').innerHTML = `<button type="button" class="back" data-back>← ${v ? v[1] : '목록'}로 돌아가기</button>
-      <span class="bar-end">${CHAPTERS[S.open] ? '<button type="button" class="chip" data-print>A4 한 장 인쇄</button>' : ''}</span>`;
+      <span class="bar-end">${CHAPTERS[S.open] ? `<button type="button" class="chip" data-print>A4 한 장 인쇄</button><button type="button" class="chip" data-print-all>보고서 전체 인쇄</button>` : ''}</span>`;
     return;
   }
   const pills = [];
@@ -410,6 +410,7 @@ function renderResultBar(r) {
   const tail = [];
   if (S.tab === 'news') tail.push(`<button type="button" class="chip" data-newer aria-pressed="${S.newer}">새 판 가능성만</button>`);
   if (S.tab === 'report' || S.tab === 'news') tail.push(`<button type="button" class="chip" data-saved aria-pressed="${S.saved}">저장한 항목 ${saved.size}</button>`);
+  if (S.tab === 'metric' && r.charts.length) tail.push(`<button type="button" class="chip primary" data-mprint-all>지표 전체 인쇄 · A4 ${r.charts.length}장</button>`);
   $('#result-bar').innerHTML = `${lead}<span class="total">${total}</span>${pills.join('')}
     ${dirty ? '<button type="button" class="linkish" data-reset>필터 초기화</button>' : ''}<span class="bar-end">${tail.join('')}</span>`;
 }
@@ -424,10 +425,13 @@ function findingHTML(it, withReport) {
     ${star(it.id)}</li>`;
 }
 
+// 참고 링크(한국어 요약 등): reports.json의 refs [{label, url}]
+const refLinks = (r) => (r.refs || []).filter((x) => /^https?:\/\//.test(x.url)).map((x) => `<a class="sub-link" href="${escHTML(x.url)}" target="_blank" rel="noopener">${escHTML(x.label)}</a>`);
 function reportHeadHTML(r, cnt) {
   const total = (r.findings || []).length;
   const links = [`<a class="sub-link" href="${escHTML(r.url)}" target="_blank" rel="noopener">${escHTML(r.urlLabel || '원문 페이지')}</a>`];
   if (r.pdf) links.push(`<a class="sub-link" href="${escHTML(r.pdf)}" target="_blank" rel="noopener">PDF</a>`);
+  links.push(...refLinks(r));
   const nc = newsCount(r.id);
   if (nc) links.push(`<button type="button" class="goto" data-news="${escHTML(r.id)}">관련 소식 ${nc}건</button>`);
   if (CHAPTERS[r.id]) links.push(`<button type="button" class="goto" data-goto="${escHTML(r.id)}">챕터별 요약</button>`);
@@ -527,23 +531,25 @@ function renderDetail(id) {
         ${(c.b || []).length ? `<span class="op-b">${c.b.map((x) => `<span>${escHTML(x)}</span>`).join('')}</span>` : `<span class="op-s">${escHTML(c.s)}</span>`}</span></a></li>`).join('')}</ol>
       <p class="op-src">${escHTML(r.org)} · ${escHTML(r.title)} · ${escHTML(fmtRDate(r.date))} — AI Report Radar 정리(${escHTML(UPDATED)} 기준)</p>
     </section>` : '<p class="hint">이 보고서의 챕터 정리는 아직 없습니다.</p>';
-  const moreCount = list.filter((c) => (c.more || []).length).length;
+  const hasMore = (c) => (c.more || []).length || c.fig || c.img;
+  const moreCount = list.filter(hasMore).length;
   const chapters = list.map((c, i) => {
     const a = anchor(i);
     const more = c.more || [];
     const open = MORE_OPEN.has(a);
+    const lab = [c.fig || c.img ? '그림' : '', more.length ? `상세 ${more.length}개` : ''].filter(Boolean).join(' · ');
     return `<section class="chap sheet" id="${a}" aria-labelledby="${a}-h">
       <header class="ch-head"><span class="ch-no">${i + 1}</span><div><h3 id="${a}-h">${escHTML(c.t)}</h3>${c.en ? `<p class="ch-en" lang="en">${escHTML(c.en)}</p>` : ''}</div>
         ${c.n ? `<span class="ch-n">${escHTML(c.n)}</span>` : ''}</header>
       <p class="ch-s">${escHTML(c.s)}</p>
       <ul class="ch-p">${(c.p || []).map((p) => `<li>${escHTML(p)}</li>`).join('')}</ul>
       ${c.k ? `<p class="ch-k"><span class="rg rg-kr">한국</span>${escHTML(c.k)}</p>` : ''}
-      ${more.length ? `<div class="ch-more" id="${a}-more"${open ? '' : ' hidden'}><p class="ch-more-h">더 자세히</p>
-        <ul class="ch-p ch-x">${more.map((p) => `<li>${escHTML(p)}</li>`).join('')}</ul></div>
-        <button type="button" class="more-btn" data-chmore="${a}" aria-expanded="${open}" aria-controls="${a}-more">${moreLabel(open, more.length)}</button>` : ''}
+      ${hasMore(c) ? `<div class="ch-more" id="${a}-more"${open ? '' : ' hidden'}>${chFigs(c, r)}
+        ${more.length ? `<p class="ch-more-h">더 자세히</p><ul class="ch-p ch-x">${more.map((p) => `<li>${escHTML(p)}</li>`).join('')}</ul>` : ''}</div>
+        <button type="button" class="more-btn" data-chmore="${a}" data-lab="${escHTML(lab)}" aria-expanded="${open}" aria-controls="${a}-more">${moreLabel(open, lab)}</button>` : ''}
     </section>`;
   }).join('');
-  const allOpen = moreCount && list.every((c, i) => !(c.more || []).length || MORE_OPEN.has(anchor(i)));
+  const allOpen = moreCount && list.every((c, i) => !hasMore(c) || MORE_OPEN.has(anchor(i)));
   const finds = ITEMS.filter((it) => it.type === 'rfind' && it.report.id === id).sort((a, b) => a._ord - b._ord);
   const order = cycleOrder();
   const at = order.findIndex((x) => x.id === id);
@@ -561,6 +567,7 @@ function renderDetail(id) {
       <div class="row-foot">${r.scope ? `<span class="status-badge">${escHTML(r.scope)}</span>` : ''}
         <a class="sub-link" href="${escHTML(r.url)}" target="_blank" rel="noopener">${escHTML(r.urlLabel || '원문 페이지')}</a>
         ${r.pdf ? `<a class="sub-link" href="${escHTML(r.pdf)}" target="_blank" rel="noopener">PDF</a>` : ''}
+        ${refLinks(r).join('')}
         ${nc ? `<button type="button" class="goto" data-news="${escHTML(id)}">관련 소식 ${nc}건</button>` : ''}
         <span class="meta-txt">${escHTML(r.when || '')} · 다음 판 ${escHTML(r.next || '미정')}</span></div>
       ${[['조사 방법', r.method], ['읽을 때 주의할 점', r.limits], ['한국에 주는 시사점', r.korea]].some(([, v]) => v)
@@ -568,7 +575,8 @@ function renderDetail(id) {
     </header>
     ${onepage}
     ${list.length ? `<section class="chapters" aria-label="챕터별 상세"><h2 class="stage-h">챕터별 상세<span class="sub">${list.length}개</span>
-      ${moreCount ? `<button type="button" class="chip all-more" data-chmore-all aria-pressed="${!!allOpen}">${allOpen ? '모두 접기' : '더보기 모두 펼치기'}</button>` : ''}</h2>${chapters}</section>` : ''}
+      <span class="ch-tools">${moreCount ? `<button type="button" class="chip" data-chmore-all aria-pressed="${!!allOpen}">${allOpen ? '모두 접기' : '더보기 모두 펼치기'}</button>` : ''}
+      <button type="button" class="chip" data-print-all>보고서 전체 인쇄(A4)</button></span></h2>${chapters}</section>` : ''}
     <section class="stage dfind"><h2 class="stage-h">핵심 발견 모아 보기<span class="sub">${total}건</span></h2>
       <ul class="sheet findings${(r.findings || []).some((f) => f.n) ? '' : ' nofig'}">${finds.map((it) => findingHTML(it, false)).join('')}</ul></section>
     <p class="hint rnote">챕터 정리는 원문·공식 요약·신뢰할 만한 보도를 바탕으로 직접 요약했습니다(${escHTML(UPDATED)} 기준). 정확한 수치와 맥락은 원문에서 확인하세요.</p>
@@ -644,7 +652,7 @@ function endLabels(labels) {
 }
 
 function lineSVG(c) {
-  const W = 340, H = 176, L = 30, R = 46, T = 14, B = 26;
+  const W = c.W || 340, H = c.H || 176, L = 30, R = 46, T = 14, B = 26;
   const pw = W - L - R, ph = H - T - B;
   const xs = c.x || [];
   const xAt = (i) => L + (xs.length > 1 ? (i * pw) / (xs.length - 1) : pw / 2);
@@ -695,7 +703,7 @@ function lineSVG(c) {
 
 const narrow = () => matchMedia('(max-width: 640px)').matches;
 function timeSVG(c) {
-  const W = narrow() ? 360 : 680, H = narrow() ? 250 : 280, L = 36, R = narrow() ? 50 : 64, T = 16, B = 30;
+  const W = c.W || (narrow() ? 360 : 680), H = c.H || (narrow() ? 250 : 280), L = 36, R = narrow() && !c.W ? 50 : 64, T = 16, B = 30;
   const pw = W - L - R, ph = H - T - B;
   const x0 = c.xMin, x1 = c.xMax, lo = c.yMin ?? 0, hi = c.yMax ?? 100;
   const xAt = (x) => L + ((x - x0) / (x1 - x0)) * pw;
@@ -720,7 +728,7 @@ function timeSVG(c) {
 }
 
 function barSVG(c) {
-  const W = 340, rowH = 40, T = 6, L = 0, R = 46;
+  const W = c.W || 340, rowH = 40, T = 6, L = 0, R = 46;
   const H = T + c.x.length * rowH + 4;
   const vals = c.series[0].values;
   const max = c.yMax ?? niceMax(Math.max(...vals));
@@ -739,6 +747,9 @@ function barSVG(c) {
 }
 
 function tableHTML(c) {
+  return `<details class="tview"><summary>표로 보기</summary><div class="tscroll">${tableCore(c)}</div></details>`;
+}
+function tableCore(c) {
   let head, body;
   if (c.type === 'time') {
     head = '<tr><th>조사</th><th>시점</th><th>값</th><th>기준</th></tr>';
@@ -747,7 +758,7 @@ function tableHTML(c) {
     head = `<tr><th></th>${c.x.map((x) => `<th>${escHTML(x)}</th>`).join('')}</tr>`;
     body = c.series.map((ser) => `<tr><td>${escHTML(ser.name)}</td>${ser.values.map((v) => `<td class="num">${v == null ? '–' : valTxt(c, v)}</td>`).join('')}</tr>`).join('');
   }
-  return `<details class="tview"><summary>표로 보기</summary><div class="tscroll"><table><thead>${head}</thead><tbody>${body}</tbody></table></div></details>`;
+  return `<table><thead>${head}</thead><tbody>${body}</tbody></table>`;
 }
 
 function chartCardHTML(c, { wide = false } = {}) {
@@ -756,10 +767,34 @@ function chartCardHTML(c, { wide = false } = {}) {
   const legend = multi ? `<p class="lkeys">${c.series.map((ser, i) => `<span><i style="background:var(--s${i + 1})"></i>${escHTML(ser.name)}${ser.basis ? `<small>${escHTML(ser.basis)}</small>` : ''}</span>`).join('')}</p>` : '';
   const src = c.report ? repBtn(c.report, 'goto') : '';
   return `<figure class="mcard sheet${wide || c.type === 'time' ? ' wide' : ''}" id="m-${escHTML(c.id)}">
-    <figcaption><h3>${highlight(c.title, parsed)}</h3>${src ? `<span class="msrc">${src}</span>` : ''}</figcaption>
+    <figcaption><h3>${highlight(c.title, parsed)}</h3>${src ? `<span class="msrc">${src}</span>` : ''}<button type="button" class="chip mprint" data-mprint="${escHTML(c.id)}" aria-label="${escHTML(c.title)} A4로 인쇄">A4 인쇄</button></figcaption>
     ${c.invert ? '<p class="mhint">위로 갈수록 높은 순위</p>' : ''}${svg}${legend}
     ${c.note ? `<p class="mnote">${escHTML(c.note)}</p>` : ''}${tableHTML(c)}</figure>`;
 }
+
+// ── 챕터 대표 그림: 보고서에 나온 수치로 다시 그린다(원문 그림을 복제하지 않음) ──
+const figNum = (f, v) => `${Number(v).toLocaleString('ko-KR', { maximumFractionDigits: 2 })}${f.unit || ''}`;
+function figHTML(f, r) {
+  if (!f) return '';
+  let body = '', key = '';
+  if (f.type === 'line') {
+    body = lineSVG({ title: f.title, x: f.x, series: f.series, unit: f.unit, yMin: f.yMin ?? 0 });
+    if (f.series.length > 1) key = `<p class="fg-key">${f.series.map((x, i) => `<span><i style="background:var(--s${i + 1})"></i>${escHTML(x.name)}</span>`).join('')}</p>`;
+  } else {
+    const two = f.type === 'bar2';
+    const max = Math.max(...f.items.flatMap((it) => it.slice(1).filter((v) => v != null)));
+    const bar = (v, k) => (v == null ? '' : `<span class="fg-bar${k ? ' b2' : ''}" style="--w:${(v / max).toFixed(4)}"><i></i><b>${escHTML(figNum(f, v))}</b></span>`);
+    body = `<div class="fg-rows${two ? ' two' : ''}" role="list">${f.items.map(([l, a, b]) => `<div class="fg-row${(f.hl || []).includes(l) ? ' hl' : ''}" role="listitem"><span class="fg-l">${escHTML(l)}</span><span class="fg-v">${bar(a, 0)}${two ? bar(b, 1) : ''}</span></div>`).join('')}</div>`;
+    if (two) key = `<p class="fg-key"><span><i></i>${escHTML(f.series[0])}</span><span><i class="b2"></i>${escHTML(f.series[1])}</span></p>`;
+  }
+  const src = `${f.note ? `${f.note} · ` : ''}자료: ${r.org}, ${r.short || r.title} — 보고서 수치로 다시 그림`;
+  return `<figure class="fig"><figcaption>${escHTML(f.title)}</figcaption>${key}${body}<p class="fg-src">${escHTML(src)}</p></figure>`;
+}
+// 직접 캡처해 넣은 그림(chapters.json의 img). 라이선스를 확인한 경우에만 넣는다.
+function imgHTML(m) {
+  return `<figure class="fig img"><img src="${escHTML(m.src)}" alt="${escHTML(m.alt || m.cap || '')}" loading="lazy">${m.cap ? `<figcaption>${escHTML(m.cap)}</figcaption>` : ''}${m.credit ? `<p class="fg-src">${escHTML(m.credit)}</p>` : ''}</figure>`;
+}
+const chFigs = (c, r) => `${c.fig ? figHTML(c.fig, r) : ''}${c.img ? imgHTML(c.img) : ''}`;
 
 function renderMetrics(list) {
   if (!list.length) { $('#list').innerHTML = emptyHTML('조건에 맞는 지표가 없습니다', '검색어를 바꾸거나 주제 선택을 풀어 보세요.'); return; }
@@ -773,6 +808,108 @@ function renderMetrics(list) {
   }
   html += `<p class="hint rnote">각 수치는 보고서 원문·공식 발표에서 옮겼습니다. 계산으로 채운 값은 차트 아래에 밝혔습니다(${escHTML(UPDATED)} 기준).</p>`;
   $('#list').innerHTML = html;
+}
+
+// ── 지표 A4 한 장: 그림 + 이 지표는·읽는 법·핵심·한국·표 ──────────
+const MMPX = 96 / 25.4;             // 1mm의 화면 픽셀
+const mSVG = (c) => { const big = { ...c, W: 600, H: 330 }; return c.type === 'time' ? timeSVG(big) : c.type === 'bar' ? barSVG(big) : lineSVG(big); };
+function metricHTML(c) {
+  const g = MGROUPS.find((x) => x.charts.includes(c.id));
+  const pr = c.print || {};
+  const reps = [...new Set([c.report, ...(c.series || []).map((x) => x.report)].filter((x) => x && REP[x]))];
+  const legend = c.series.length > 1 ? `<p class="fg-key">${c.series.map((x, i) => `<span><i style="background:var(--s${i + 1})"></i>${escHTML(x.name)}${x.basis ? ` <small>${escHTML(x.basis)}</small>` : ''}</span>`).join('')}</p>` : '';
+  const list = (h, arr) => (arr && arr.length ? `<section><h2 class="a4-h">${h}</h2><ul class="a4-p">${arr.map((t) => `<li>${escHTML(t)}</li>`).join('')}</ul></section>` : '');
+  return `<div class="a4-in a4-metric">
+    <p class="a4-run"><span>AI Report Radar · 지표 추적${g ? ` · ${escHTML(g.label)}` : ''}</span><span>${escHTML(UPDATED)} 기준</span></p>
+    <header class="a4-mhead"><h1>${escHTML(c.title)}</h1>
+      <p class="a4-meta">${reps.map((id) => `<span>${escHTML(REP[id].org)} · ${escHTML(REP[id].short)} (${escHTML(fmtRDate(REP[id].date))})</span>`).join('')}</p></header>
+    ${pr.desc ? `<p class="a4-lead">${escHTML(pr.desc)}</p>` : ''}
+    <div class="a4-chartbox">${c.invert ? '<p class="a4-hint">위로 갈수록 높은 순위</p>' : ''}${legend}<div class="a4-chart">${mSVG(c)}</div></div>
+    <div class="a4-two">${list('읽는 법', pr.read)}${list('핵심', pr.points)}</div>
+    ${pr.korea ? `<p class="a4-k2"><b>한국</b>${escHTML(pr.korea)}</p>` : ''}
+    <div class="a4-tbl">${tableCore(c)}</div>
+    <p class="a4-src">${c.note ? `${escHTML(c.note)} · ` : ''}출처: ${reps.map((id) => `${escHTML(REP[id].org)}, ${escHTML(REP[id].title)} (${escHTML(REP[id].url)})`).join(' / ')} · AI Report Radar 정리</p>
+  </div>`;
+}
+// 글자는 그림 자리(72mm 이상)를 남기는 가장 큰 크기로, 남는 자리는 그림이 모두 차지한다
+function metricBuild(sheet, c) {
+  sheet.innerHTML = metricHTML(c);
+  const inner = sheet.firstElementChild, box = inner.querySelector('.a4-chart');
+  const room = inner.clientHeight, want = 72 * MMPX;
+  const ok = (pt) => { sheet.style.setProperty('--fs', `${pt}pt`); return inner.scrollHeight <= room + 0.5 && box.clientHeight >= want; };
+  let lo = 8.5, hi = 12.5;
+  if (ok(hi)) return hi;
+  if (!ok(lo)) { sheet.style.setProperty('--fs', `${lo}pt`); return lo; }
+  while (hi - lo > 0.1) { const m = (lo + hi) / 2; if (ok(m)) lo = m; else hi = m; }
+  const pt = Math.floor(lo * 10) / 10;
+  sheet.style.setProperty('--fs', `${pt}pt`);
+  return pt;
+}
+function a4Metric(id, from) {
+  const c = CHARTS[id];
+  if (!c) return;
+  const m = a4Modal();
+  m.hidden = false;
+  a4Id = `@${id}`;
+  document.body.classList.add('a4-open');
+  const pt = metricBuild(a4Pages(1)[0], c);
+  $('#a4-title').textContent = '지표 A4 미리보기';
+  $('#a4-info').textContent = `글자 크기 ${pt.toFixed(1)}pt · 남는 자리는 그림을 키워 채움`;
+  m.querySelector('.a4-stage').scrollTop = 0;
+  a4Scale();
+  a4Prev = from || null;
+  m.querySelector('[data-a4-print]').focus();
+}
+
+// 지표 전체: 지금 보이는(검색·주제 필터 반영) 지표를 화면 순서대로 A4 한 장씩
+function a4MetricsAll(from) {
+  const shown = new Set(compute().charts.map((c) => c.id));
+  const ids = MGROUPS.flatMap((g) => g.charts).filter((id) => shown.has(id) && CHARTS[id]);
+  if (!ids.length) return;
+  const m = a4Modal();
+  m.hidden = false;
+  a4Id = '@all';
+  document.body.classList.add('a4-open');
+  const sheets = a4Pages(ids.length);
+  const pts = ids.map((id, i) => metricBuild(sheets[i], CHARTS[id]));
+  sheets.forEach((sh, i) => { const run = sh.querySelector('.a4-run span:last-child'); if (run) run.textContent = `${UPDATED} 기준 · ${i + 1} / ${ids.length}`; });
+  $('#a4-title').textContent = '지표 전체 인쇄 미리보기';
+  $('#a4-info').textContent = `A4 ${ids.length}장 — 지표마다 한 장 · 글자 ${Math.min(...pts).toFixed(1)}~${Math.max(...pts).toFixed(1)}pt`;
+  m.querySelector('.a4-stage').scrollTop = 0;
+  a4Scale();
+  a4Prev = from || null;
+  m.querySelector('[data-a4-print]').focus();
+}
+
+// ── 최근 주요 소식(맨 위) ───────────────────────────────────
+// 최근 2주(부족하면 45일) 소식 가운데 새 판 신호·여러 매체 보도·한국 관련·여러 보고서 연결·최신일수록 점수를 높게 준다
+function hotNews() {
+  const news = ITEMS.filter((it) => it.type === 'news');
+  if (!news.length) return [];
+  const t = today();
+  const day = (it) => String(it.date || '').slice(0, 10);
+  let pool = news.filter((it) => day(it) >= addDays(t, -14));
+  if (pool.length < 3) pool = news.filter((it) => day(it) >= addDays(t, -45));
+  if (pool.length < 3) pool = news;
+  const score = (it) => ((it.newer || []).length ? 3 : 0) + Math.min((it.also || []).length, 3) + (it.cats.includes('korea') ? 1 : 0)
+    + ((it.reps || []).length > 1 ? 1 : 0) + Math.max(0, 2 - (toMs(t) - toMs(day(it))) / (7 * 86400000));
+  return pool.map((it) => [score(it), it]).sort((a, b) => b[0] - a[0] || (day(b[1]) > day(a[1]) ? 1 : -1))
+    .slice(0, 5).map((x) => x[1]).sort((a, b) => (day(a) < day(b) ? 1 : -1));
+}
+function renderHot() {
+  const el = $('#hot');
+  if (!el) return;
+  const list = hotNews();
+  el.hidden = !list.length;
+  if (!list.length) return;
+  el.innerHTML = `<div class="hot-h"><h2>최근 주요 소식</h2><span class="sub">보고서 관련 기사 가운데 새 판 소식, 여러 매체가 다룬 기사, 한국 관련 기사를 앞에 둡니다</span>
+      ${S.tab !== 'news' ? '<button type="button" class="chip" data-tab="news">새 소식 전체 보기</button>' : ''}</div>
+    <ol class="hot-list">${list.map((it) => {
+      const d = String(it.date || '').slice(0, 10);
+      return `<li class="hot-i"><p class="hot-m"><time datetime="${escHTML(d)}">${escHTML(md(d))}</time><span>${escHTML(it.source || '')}</span>${(it.newer || []).length ? '<span class="newer">새 판 가능성</span>' : ''}</p>
+        <a class="hot-t" href="${escHTML(it.url)}" target="_blank" rel="noopener" lang="${it.lang === 'en' ? 'en' : 'ko'}">${escHTML(it.title)}</a>
+        <p class="hot-r">${(it.reps || []).slice(0, 2).map((id) => repBtn(id)).join('')}${(it.also || []).length ? `<span class="hot-also">외 ${it.also.length}곳 보도</span>` : ''}</p></li>`;
+    }).join('')}</ol>`;
 }
 
 // ── 쟁점 분석 탭 ──────────────────────────────────────────
@@ -881,7 +1018,8 @@ function renderMeta() {
 
 function render({ keepPage = false } = {}) {
   if (!keepPage) shown = PAGE;
-  if (!isDetail() || S.open !== a4Id) a4Close();
+  if (a4Id && (a4Id.startsWith('@') ? S.tab !== 'metric' : (!isDetail() || S.open !== a4Id))) a4Close();
+  renderHot();
   const r = compute();
   renderTabs(r.counts);
   renderPeriods();
@@ -950,14 +1088,14 @@ function closeReport() {
 }
 // ── 챕터 상세 '더보기' ────────────────────────────────────
 const MORE_OPEN = new Set();        // 펼친 챕터 앵커(다시 그려도 유지)
-const moreLabel = (open, n) => (open ? '접기' : `더보기 <span class="n">${n}개</span>`);
+const moreLabel = (open, lab) => (open ? '접기' : `더보기${lab ? ` <span class="n">${escHTML(lab)}</span>` : ''}`);
 function setMore(btn, open) {
   const a = btn.dataset.chmore;
   const box = document.getElementById(`${a}-more`);
   if (!box) return;
   box.hidden = !open;
   btn.setAttribute('aria-expanded', String(open));
-  btn.innerHTML = moreLabel(open, box.querySelectorAll('li').length);
+  btn.innerHTML = moreLabel(open, btn.dataset.lab || '');
   if (open) MORE_OPEN.add(a); else MORE_OPEN.delete(a);
 }
 function syncAllMore() {
@@ -1047,15 +1185,113 @@ function a4Build(sheet, id) {
 }
 let a4Prev = null;                  // 미리보기를 연 버튼(닫을 때 포커스 복귀)
 let a4Id = '';                      // 미리보기에 띄운 보고서
+// 보고서 전체: 챕터를 이어 쓴다. 한 챕터가 한 장을 다 못 채우면 다음 챕터가 같은 장에 이어지고,
+// 넘치면 다음 장으로 넘어간다(제목은 다음 덩어리와 붙여서, 목록은 항목 단위로 나눈다).
+const FLOW = { min: 9.5, max: 11.5, step: 0.25 };
+function chBlocks(r, ch) {
+  const out = [];                    // { i: 챕터 번호, kind: head|fig|text, html }
+  (ch.chapters || []).forEach((c, i) => {
+    out.push({ i, kind: 'head', html: `<section class="a4-cs"><header class="a4-chead"><span class="a4-cno">${i + 1}</span><div><h1>${escHTML(c.t)}</h1>${c.en ? `<p class="a4-en" lang="en">${escHTML(c.en)}</p>` : ''}</div>${c.n ? `<em>${escHTML(c.n)}</em>` : ''}</header>
+      <p class="a4-lead">${escHTML(c.s)}</p></section>` });
+    if (c.fig || c.img) out.push({ i, kind: 'fig', html: `<div class="a4-blk"><div class="a4-fig">${chFigs(c, r)}</div></div>` });
+    const sec = (h, list, cls) => list.forEach((t, j) => out.push({ i, kind: 'text', html: `<div class="a4-blk">${j ? '' : `<h2 class="a4-h">${h}</h2>`}<ul class="a4-p${cls}"><li>${escHTML(t)}</li></ul></div>` }));
+    sec('핵심 정리', c.p || [], '');
+    sec('더 자세히', c.more || [], ' a4-pm');
+    if (c.k) out.push({ i, kind: 'text', html: `<div class="a4-blk"><p class="a4-k2"><b>한국</b>${escHTML(c.k)}</p></div>` });
+  });
+  return out;
+}
+function flowPage(r) {
+  const box = $('#a4-modal .a4-pages');
+  const f = document.createElement('div');
+  f.className = 'a4-frame';
+  f.innerHTML = `<div class="a4-sheet" style="--fs:${FLOW.cur}pt"><div class="a4-in a4-flow">
+    <p class="a4-run"><span>${r.region === 'kr' ? '국내' : '해외'} · ${escHTML(r.org)} · ${escHTML(r.short || r.title)}</span><span class="a4-chs">&nbsp;</span></p>
+    <div class="a4-body"></div><p class="a4-pno">&nbsp;</p></div></div>`;
+  box.append(f);
+  return f.querySelector('.a4-body');
+}
+// 덩어리를 차례로 붙이다 넘치면 다음 장으로. 그림은 자리가 없으면 뒤 글을 먼저 채우고 다음 장 맨 위로 미룬다.
+// 챕터 제목은 바로 뒤 글 한 덩어리와 같은 장에 있어야 한다(장 끝에 제목만 남지 않게).
+function flowLayout(r, blocks, pt) {
+  FLOW.cur = pt;
+  $$('#a4-modal .a4-pages .a4-frame').slice(1).forEach((x) => x.remove());   // 1쪽(한 장 요약)은 둔다
+  const tpl = document.createElement('template');
+  const make = (blk) => { tpl.innerHTML = blk.html.trim(); const el = tpl.content.firstElementChild; el._i = blk.i; return el; };
+  const pages = [];
+  let body, pending = [];
+  const over = () => body.scrollHeight > body.clientHeight + 0.5;
+  const mark = (el) => pages[pages.length - 1].chs.add(el._i + 1);
+  const newPage = () => {
+    body = flowPage(r);
+    pages.push({ body, chs: new Set() });
+    for (const el of pending) { body.append(el); mark(el); }
+    pending = [];
+  };
+  const put = (el) => {                  // 넘치면 새 장에 넣는다
+    body.append(el);
+    if (over() && body.children.length > 1) { el.remove(); newPage(); body.append(el); }
+    mark(el);
+  };
+  newPage();
+  blocks.forEach((blk, n) => {
+    const el = make(blk);
+    if (blk.kind === 'fig') {
+      body.append(el);
+      if (over() && body.children.length > 1) { el.remove(); pending.push(el); } else mark(el);
+      return;
+    }
+    if (blk.kind === 'head') {
+      if (pending.length) newPage();     // 앞 챕터 그림이 밀려 있으면 먼저 내보낸다
+      const next = blocks.slice(n + 1).find((x) => x.kind === 'text' && x.i === blk.i);
+      body.append(el);
+      let ok = !over();
+      if (ok && next) { const t = make(next); body.append(t); ok = !over(); t.remove(); }
+      if (!ok && body.children.length > 1) { el.remove(); newPage(); body.append(el); }
+      mark(el);
+      return;
+    }
+    put(el);
+  });
+  if (pending.length) newPage();
+  return pages;
+}
+function flowBuild(id) {
+  const r = REP[id], ch = CHAPTERS[id];
+  const blocks = chBlocks(r, ch);
+  // 가장 작은 글자로 필요한 장 수를 구하고, 같은 장 수 안에서 가장 큰 글자를 고른다(마지막 장까지 꽉 차게)
+  const need = flowLayout(r, blocks, FLOW.min).length;
+  let pt = FLOW.min;
+  for (let x = FLOW.max; x > FLOW.min; x -= FLOW.step) {
+    if (flowLayout(r, blocks, x).length <= need) { pt = x; break; }
+  }
+  const pages = flowLayout(r, blocks, pt);
+  const total = pages.length + 1;
+  pages.forEach((pg, k) => {
+    const sheet = pg.body.closest('.a4-in');
+    const nums = [...pg.chs];
+    sheet.querySelector('.a4-chs').textContent = nums.length > 1 ? `챕터 ${nums[0]}–${nums[nums.length - 1]}` : `챕터 ${nums[0]}`;
+    sheet.querySelector('.a4-pno').textContent = `${k + 2} / ${total}`;
+  });
+  return { pages: pages.length, pt };
+}
+function a4Pages(n) {
+  const box = $('#a4-modal .a4-pages');
+  box.innerHTML = Array.from({ length: n }, () => '<div class="a4-frame"><div class="a4-sheet"></div></div>').join('');
+  return $$('.a4-sheet', box);
+}
 function a4Scale() {
   const m = $('#a4-modal');
   if (!m || m.hidden) return;
-  const stage = m.querySelector('.a4-stage'), frame = m.querySelector('.a4-frame'), sheet = m.querySelector('.a4-sheet');
-  const w = sheet.offsetWidth, h = sheet.offsetHeight;
-  const k = Math.min(1, (stage.clientWidth - 32) / w);
-  sheet.style.transform = `scale(${k})`;
-  frame.style.width = `${Math.round(w * k)}px`;
-  frame.style.height = `${Math.round(h * k)}px`;
+  const stage = m.querySelector('.a4-stage');
+  for (const frame of $$('.a4-frame', m)) {
+    const sheet = frame.firstElementChild;
+    const w = sheet.offsetWidth, h = sheet.offsetHeight;
+    const k = Math.min(1, (stage.clientWidth - 32) / w);
+    sheet.style.transform = `scale(${k})`;
+    frame.style.width = `${Math.round(w * k)}px`;
+    frame.style.height = `${Math.round(h * k)}px`;
+  }
 }
 function a4Modal() {
   let m = $('#a4-modal');
@@ -1069,7 +1305,7 @@ function a4Modal() {
   m.setAttribute('aria-labelledby', 'a4-title');
   m.innerHTML = `<div class="a4-bar"><h2 id="a4-title">A4 한 장 미리보기</h2><span class="a4-info" id="a4-info"></span>
       <span class="a4-act"><button type="button" class="a4-btn primary" data-a4-print>인쇄 · PDF로 저장</button><button type="button" class="a4-btn" data-a4-close>닫기</button></span></div>
-    <div class="a4-stage"><div class="a4-frame"><div class="a4-sheet"></div></div></div>`;
+    <div class="a4-stage"><div class="a4-pages"></div></div>`;
   document.body.append(m);
   m.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') { e.preventDefault(); a4Close(); return; }
@@ -1088,15 +1324,29 @@ function a4Modal() {
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !m.hidden && !m.contains(e.target)) a4Close(); });
   return m;
 }
-function a4Open(id, from) {
+// mode 'one' = 한 장 요약 1장, 'all' = 한 장 요약 + 챕터마다 1장(보고서 전체)
+function a4Open(id, from, mode = 'one') {
   const m = a4Modal();
+  const ch = CHAPTERS[id];
+  if (!ch) return;
   m.hidden = false;
   a4Id = id;
   document.body.classList.add('a4-open');
-  const pick = a4Build(m.querySelector('.a4-sheet'), id);
-  const top = pick && pick.L >= a4Levels(CHAPTERS[id].chapters || []);
-  const extra = !pick || pick.L < 2 ? '' : top ? ' · 더보기 상세와 조사 방법까지 모두 담음' : ` · 챕터마다 더보기 상세 ${pick.L - 1}줄까지 담음`;
-  $('#a4-info').textContent = pick ? `글자 크기 ${pick.pt.toFixed(1)}pt로 한 장에 맞춤${extra}` : '';
+  const sheets = a4Pages(1);
+  const pick = a4Build(sheets[0], id);
+  let info = '';
+  if (mode === 'all') {
+    const res = flowBuild(id);
+    info = `A4 ${res.pages + 1}장 — 1쪽 한 장 요약 + 챕터 ${ch.chapters.length}개를 이어서 ${res.pages}쪽 · 글자 ${res.pt.toFixed(2).replace(/0$/, '')}pt`;
+    $('#a4-title').textContent = '보고서 전체 인쇄 미리보기';
+  } else {
+    const top = pick && pick.L >= a4Levels(ch.chapters || []);
+    const extra = !pick || pick.L < 2 ? '' : top ? ' · 더보기 상세와 조사 방법까지 모두 담음' : ` · 챕터마다 더보기 상세 ${pick.L - 1}줄까지 담음`;
+    info = pick ? `글자 크기 ${pick.pt.toFixed(1)}pt로 한 장에 맞춤${extra}` : '';
+    $('#a4-title').textContent = 'A4 한 장 미리보기';
+  }
+  $('#a4-info').textContent = info;
+  m.querySelector('.a4-stage').scrollTop = 0;
   a4Scale();
   a4Prev = from || null;
   m.querySelector('[data-a4-print]').focus();
@@ -1111,20 +1361,15 @@ function a4Close() {
   a4Prev = null;
 }
 // 미리보기 없이 Ctrl+P를 눌러도 상세 화면에서는 한 장 요약이 인쇄되게 한다
-let a4Temp = false;
 window.addEventListener('beforeprint', () => {
   const m = $('#a4-modal');
   if (m && !m.hidden) { document.body.classList.add('print-a4'); return; }
   if (!isDetail() || !CHAPTERS[S.open]) return;
-  const mm = a4Modal();
-  a4Build(mm.querySelector('.a4-sheet'), S.open);
-  a4Temp = true;
+  a4Modal();
+  a4Build(a4Pages(1)[0], S.open);
   document.body.classList.add('print-a4');
 });
-window.addEventListener('afterprint', () => {
-  document.body.classList.remove('print-a4');
-  if (a4Temp) { a4Temp = false; }
-});
+window.addEventListener('afterprint', () => document.body.classList.remove('print-a4'));
 
 // ── 툴팁(차트) ────────────────────────────────────────────
 function bindTips() {
@@ -1193,6 +1438,9 @@ function bind() {
     if (d.view) { S.view = d.view; S.open = ''; render(); return; }
     if (t.hasAttribute('data-back')) { closeReport(); return; }
     if (t.hasAttribute('data-print')) { if (S.open) a4Open(S.open, t); return; }
+    if (d.mprint) { a4Metric(d.mprint, t); return; }
+    if (t.hasAttribute('data-mprint-all')) { a4MetricsAll(t); return; }
+    if (t.hasAttribute('data-print-all')) { if (S.open) a4Open(S.open, t, 'all'); return; }
     if (d.chmore) { setMore(t, t.getAttribute('aria-expanded') !== 'true'); syncAllMore(); return; }
     if (t.hasAttribute('data-chmore-all')) {
       const on = t.getAttribute('aria-pressed') !== 'true';
