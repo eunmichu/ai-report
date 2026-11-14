@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Report Radar — 국내외 AI 보고서 분석</title>
+  <meta name="description" content="국내외 대표 AI 보고서(AI Index·국제 AI 안전 보고서·OECD·인터넷이용실태조사·한국은행 등)를 보고서별·주제별·발간 주기별로 정리하고, 지표를 판별로 추적하며, 같은 질문에 대한 보고서들의 답을 비교 분석합니다.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#F1F3F6" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0D1320" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="assets/style.css">
+  <script>
+    try { const t = localStorage.getItem('arr.theme'); if (t) document.documentElement.dataset.theme = t; } catch {}
+  </script>
+</head>
+<body>
+  <a class="skip" href="#feed">본문 바로가기</a>
+
+  <header class="top">
+    <div class="top-in">
+      <a class="brand" href="./" aria-label="AI Report Radar 처음 화면">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+          <circle cx="16" cy="16" r="13" fill="none" stroke="currentColor" stroke-width="1.6" opacity=".35"/>
+          <circle cx="16" cy="16" r="8" fill="none" stroke="currentColor" stroke-width="1.6" opacity=".55"/>
+          <path d="M16 16 L16 3 A13 13 0 0 1 27.3 9.5 Z" fill="currentColor" opacity=".9"/>
+          <circle cx="22.5" cy="11" r="1.9" fill="var(--t-news)"/>
+          <circle cx="9.5" cy="20" r="1.9" fill="var(--t-paper)"/>
+          <circle cx="19" cy="23.5" r="1.9" fill="var(--t-patent)"/>
+        </svg>
+        <span class="brand-name">AI Report Radar</span>
+      </a>
+      <p class="brand-desc">국내외 AI 보고서 분석</p>
+      <div class="top-tools">
+        <span class="updated" id="updated" aria-live="polite"></span>
+        <button class="icon-btn" id="theme" type="button" aria-label="화면 테마 바꾸기" title="밝게/어둡게">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9Z" fill="currentColor"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="notice" id="notice" hidden></div>
+
+  <div class="shell">
+    <section class="hot" id="hot" aria-label="최근 주요 소식" hidden></section>
+    <section class="controls" aria-label="검색과 보기 방식">
+      <form class="search" id="search-form" role="search" onsubmit="return false">
+        <svg class="search-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="m16 16 4.5 4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <input id="q" type="search" autocomplete="off" spellcheck="false" enterkeyhint="search"
+               placeholder="검색어 — 예: 생성형 AI 이용률, 한국은행, 일자리, ㅇㅇㄹ"
+               aria-label="보고서·지표·쟁점·소식 검색">
+        <kbd class="kbd" aria-hidden="true">/</kbd>
+      </form>
+      <details class="help">
+        <summary>검색 방법</summary>
+        <ul>
+          <li>띄어쓰기는 무시합니다. <b>생성형AI</b>와 <b>생성형 AI</b>는 같은 검색입니다.</li>
+          <li>한글로 찾으면 영문 표현도 함께 찾습니다. <b>일자리</b> → jobs, <b>특허</b> → patent, <b>맥킨지</b> → McKinsey</li>
+          <li>초성만 입력해도 제목을 찾습니다. <b>ㅇㅇㄹ</b> → 이용률</li>
+          <li>여러 단어는 모두 포함, <b>-단어</b>는 제외, <b>"정확한 구문"</b>, <b>A|B</b>는 둘 중 하나</li>
+          <li>기관명(<b>OECD</b>, <b>한국은행</b>), 숫자(<b>44.5%</b>), <b>국내</b>·<b>해외</b>로도 찾을 수 있습니다. 검색은 지금 보고 있는 탭에 적용됩니다.</li>
+        </ul>
+      </details>
+
+      <div class="seg" id="tabs" role="tablist" aria-label="보기"></div>
+
+      <div class="bar" id="bar">
+        <div class="periods" id="periods" role="group" aria-label="기간"></div>
+        <label class="sort">
+          <span class="vh">정렬</span>
+          <select id="sort">
+            <option value="latest">최신순</option>
+            <option value="relevance">관련도순</option>
+                      </select>
+        </label>
+      </div>
+      <div class="range" id="range" hidden>
+        <label>시작 <input type="date" id="from"></label>
+        <label>끝 <input type="date" id="to"></label>
+      </div>
+    </section>
+
+    <aside class="side" aria-label="주제와 분포">
+      <section class="panel">
+        <h2 class="panel-h" id="cats-h">주제</h2>
+        <div class="cats" id="cats" role="group" aria-label="주제 필터(여러 개 선택 가능)"></div>
+      </section>
+      <details class="panel viz" id="viz" open>
+        <summary class="panel-h">분포 보기</summary>
+        <figure class="radar" id="radar" aria-label="주제별 분포 레이더"></figure>
+        <div class="legend" id="legend"></div>
+        <div id="days">
+          <figure class="timeline" id="timeline" aria-label="최근 14일 소식 수"></figure>
+          <p class="hint">막대를 누르면 그날만 봅니다.</p>
+        </div>
+      </details>
+    </aside>
+
+    <main class="feed" id="feed" tabindex="-1">
+      <div class="result-bar" id="result-bar"></div>
+      <div id="list" aria-live="polite"></div>
+      <div class="more" id="more"></div>
+    </main>
+  </div>
+
+  <footer class="foot">
+    <div class="foot-in">
+      <details class="status" id="status">
+        <summary>수집 상태</summary>
+        <div id="status-list"></div>
+      </details>
+      <p>원문과 저작권은 각 출처에 있습니다. 보고서·지표·쟁점은 원문과 공식 발표를 바탕으로 직접 고르고 요약·분석한 자료이고,
+        새 소식은 Google 뉴스와 매체 RSS에서 보고서 이름이 들어간 기사만 골라 3시간마다 모읍니다.</p>
+    </div>
+  </footer>
+
+  <script type="module" src="assets/app.js"></script>
+</body>
+</html>
